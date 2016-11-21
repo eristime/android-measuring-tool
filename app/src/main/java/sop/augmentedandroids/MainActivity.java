@@ -19,7 +19,8 @@ import android.view.WindowManager;
 
 public class MainActivity extends Activity implements CvCameraViewListener, View.OnTouchListener {
 
-    private static final String TAG = "Sample::Puzzle15::Activity";
+    private static final String TAG = "Sample::Puzzle15::A";
+
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -46,6 +47,10 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Load ndk built module
+        System.loadLibrary("native-lib");
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         Log.d(TAG, "Creating and setting view");
@@ -79,6 +84,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
     }
 
     public void onCameraViewStarted(int width, int height) {
+        Test(21);
     }
 
     public void onCameraViewStopped() {
@@ -91,4 +97,9 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
     public Mat onCameraFrame(Mat inputFrame) {
         return inputFrame;
     }
+
+    //native methods
+
+    public native int Test(int number);
+
 }

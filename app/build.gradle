@@ -10,11 +10,33 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-frtti -fexceptions"
+                abiFilters 'x86',  'armeabi', 'armeabi-v7a', 'mips'
+            }
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // Encapsulates your external native build configurations.
+    externalNativeBuild {
+
+        // Encapsulates your CMake build configurations.
+        cmake {
+
+            // Provides a relative path to your CMake build script.
+            path "CMakeLists.txt"
         }
     }
 }
