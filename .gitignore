@@ -8,3 +8,5 @@
 /captures
 .externalNativeBuild
 /app/src/main/jniLibs
+/app/build
+/openCVLibrary24131/build
