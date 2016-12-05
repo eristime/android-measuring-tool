@@ -9,7 +9,6 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.JavaCameraView;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
@@ -42,8 +41,11 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
     static Rect refRect = new Rect(0,0,0,0);
     static RotatedRect rotRect = new RotatedRect();
+    static List<MatOfPoint> rotRectCnt = new ArrayList<>();
 
     Scalar textCol = new Scalar(255, 0, 255);
+
+    RefObjDetector cubeDetector;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -82,6 +84,8 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         mOpenCvCameraView.enableFpsMeter();
+
+        cubeDetector = new RefObjDetector();
     }
 
     @Override
@@ -120,53 +124,52 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
     public Mat onCameraFrame(Mat inputFrame) {
 
-
         // Skip calculating contour for as many frames as indicated by 'frameskip' variable
         if(frame_i < frameskip) {
             frame_i++;
         } else {
             frame_i = 0;
-            UpdateContours(inputFrame);
+            cubeDetector.ProcessFrame(inputFrame);
+            refRect = cubeDetector.getRefRect();
+            rotRect = cubeDetector.getRotRect();
         }
 
-        //UpdateContours(inputFrame);
-
-        // DRAW THE BOUNDING RECTANGLE (GREEN ONE)
+        // Draw the bounding rectangle on-screen in green color
         Core.rectangle(inputFrame, refRect.tl(), refRect.br(), new Scalar(0,255,10,255), 2);
 
 
-        // CALCULATE ROTATED RECTANGLE (MAGENTA ONE)
-        Point[] ps = new Point[4];
-        rotRect.points(ps);
-        List<MatOfPoint> rotRectCnt = new ArrayList<>();
-        rotRectCnt.add(new MatOfPoint(ps));
-
+        // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, rotRectCnt, -1, new Scalar(255, 0, 255), 2);   // Draw rotated rect into image frame
 
 
-        // CALCULATE AVG RECT SIDE LENGTH
+        // Write average rect side length on-screen
         NumberFormat nF = new DecimalFormat("#0.00");
-        Core.putText(inputFrame, "avg side length: " + nF.format(RectAvgLength(ps)), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+        Core.putText(inputFrame, "avg side length: " + nF.format(cubeDetector.getAvgSideLen()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
 
-        // CENTER OF ROTATED RECT
+        // Draw a circle marker and write color info of rotated rectangle center point
+        DrawRotRectCenterData(inputFrame);
+
+        return inputFrame;  // Return the final edited image frame
+    }
+
+    private void DrawRotRectCenterData(Mat frame_in) {
+
+        // Center of the rotated rectangle
         Point rectCenterPoint = rotRect.center;
 
         double[] rectCenterColDoubles = {0.0, 0.0, 0.0};
-        rectCenterColDoubles = inputFrame.get(DoubleToInt(rectCenterPoint.y), DoubleToInt(rectCenterPoint.x));
+        rectCenterColDoubles = frame_in.get(DoubleToInt(rectCenterPoint.y), DoubleToInt(rectCenterPoint.x));
         // Workaround for app crash in a case where couldn't acquire color values of rect center
         if(rectCenterColDoubles != null) {
             Scalar rectCenterCols = new Scalar(DoubleToInt(rectCenterColDoubles[0]), DoubleToInt(rectCenterColDoubles[1]), DoubleToInt(rectCenterColDoubles[2]));
 
-            Core.putText(inputFrame, "R: " + String.valueOf(rectCenterColDoubles[0]), new Point(900.0, 40), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(inputFrame, "G: " + String.valueOf(rectCenterColDoubles[1]), new Point(900.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(inputFrame, "B: " + String.valueOf(rectCenterColDoubles[2]), new Point(900.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "R: " + String.valueOf(rectCenterColDoubles[0]), new Point(900.0, 40), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "G: " + String.valueOf(rectCenterColDoubles[1]), new Point(900.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "B: " + String.valueOf(rectCenterColDoubles[2]), new Point(900.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
-            Core.circle(inputFrame, rectCenterPoint, 10, textCol, 3);
+            Core.circle(frame_in, rectCenterPoint, 10, textCol, 3);
         }
-
-
-        return inputFrame;  // Return the final edited image frame
     }
 
     int DoubleToInt(double a) {
@@ -184,59 +187,5 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
     double GetDist(Point p1, Point p2) {
         return Math.sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
-    }
-
-    public synchronized void UpdateContours(Mat frame_in) {
-
-        Mat frame = frame_in.clone();
-        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-        Mat hierarchy = new Mat();
-
-        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
-
-        Core.bitwise_not(frame, frame);     // Seems to improve detection, maybe. Test more..
-
-        Imgproc.Canny(frame, frame, 50.0, 175.0);
-        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
-        //Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
-
-        Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        int contoursCounter = contours.size();
-
-        if (contoursCounter == 0) {
-            return;
-        }
-
-        int biggestContour_i = 0;
-        double biggestContourArea = 0;
-
-        for (int i=0; i<contoursCounter; i++) {
-            double area = Imgproc.contourArea(contours.get(i));
-            if (area > biggestContourArea && area < 800000) {
-                biggestContour_i = i;
-                biggestContourArea = area;
-            }
-        }
-
-        List<MatOfPoint> bigContour = new ArrayList<MatOfPoint>();
-        bigContour.add(contours.get(biggestContour_i));
-
-        MatOfPoint2f contour2f = new MatOfPoint2f(bigContour.get(0).toArray());
-        MatOfPoint2f curve = new MatOfPoint2f();
-
-        double dist = Imgproc.arcLength(contour2f, true)*0.02;
-
-        Imgproc.approxPolyDP(contour2f, curve, dist, true);
-
-        MatOfPoint biggestContour = new MatOfPoint(curve.toArray());
-
-        refRect = Imgproc.boundingRect(biggestContour);
-
-        //MatOfPoint2f points = new MatOfPoint2f()
-
-        rotRect = Imgproc.minAreaRect(curve);
-
-        //Log.d(TAG, Double.toString(biggestContourArea));
     }
 }
