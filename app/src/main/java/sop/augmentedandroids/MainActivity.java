@@ -158,22 +158,17 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
         // Center of the rotated rectangle
         Point rectCenterPoint = rotRect.center;
 
-        double[] rectCenterColDoubles = {0.0, 0.0, 0.0};
-        rectCenterColDoubles = frame_in.get(DoubleToInt(rectCenterPoint.y), DoubleToInt(rectCenterPoint.x));
+        double [] rectCenterCols = cubeDetector.getRectCenterCols();
         // Workaround for app crash in a case where couldn't acquire color values of rect center
-        if(rectCenterColDoubles != null) {
-            Scalar rectCenterCols = new Scalar(DoubleToInt(rectCenterColDoubles[0]), DoubleToInt(rectCenterColDoubles[1]), DoubleToInt(rectCenterColDoubles[2]));
+        if(rectCenterCols != null) {
+            //Scalar rectCenterCols = new Scalar(DoubleToInt(rectCenterCols[0]), DoubleToInt(rectCenterCols[1]), DoubleToInt(rectCenterCols[2]));
 
-            Core.putText(frame_in, "R: " + String.valueOf(rectCenterColDoubles[0]), new Point(900.0, 40), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(frame_in, "G: " + String.valueOf(rectCenterColDoubles[1]), new Point(900.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(frame_in, "B: " + String.valueOf(rectCenterColDoubles[2]), new Point(900.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "R: " + String.valueOf(rectCenterCols[0]), new Point(900.0, 40), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "G: " + String.valueOf(rectCenterCols[1]), new Point(900.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+            Core.putText(frame_in, "B: " + String.valueOf(rectCenterCols[2]), new Point(900.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
             Core.circle(frame_in, rectCenterPoint, 10, textCol, 3);
         }
-    }
-
-    int DoubleToInt(double a) {
-        return Integer.valueOf((int) Math.round(a));
     }
 
     double RectAvgLength(Point[] ps) {

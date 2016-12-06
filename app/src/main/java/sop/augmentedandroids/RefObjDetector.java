@@ -18,10 +18,19 @@ import java.util.List;
 
 public class RefObjDetector {
 
+    /* CLASS VARS */
     private Rect refRect;
     private RotatedRect rotRect;
     private double avgSideLen;
-    private List<MatOfPoint> rotRectCnt = new ArrayList<>();
+    private List<MatOfPoint> rotRectCnt;
+    private double[] rectCenterCols;
+
+
+    /* GETTERS */
+
+    public double[] getRectCenterCols() {
+        return rectCenterCols;
+    }
 
     public List<MatOfPoint> getRotRectCnt() {
         return rotRectCnt;
@@ -39,11 +48,15 @@ public class RefObjDetector {
         return rotRect;
     }
 
+
+    /* CONSTRUCTOR */
     public RefObjDetector() {
 
         refRect = new Rect(0,0,0,0);
         rotRect = new RotatedRect();
+        rotRectCnt = new ArrayList<>();
     }
+
 
     // CALCULATE AVG RECT SIDE LENGTH
     private double RectAvgLength(Point[] ps) {
@@ -72,6 +85,42 @@ public class RefObjDetector {
         rotRectCnt = cnt;
     }
 
+    private int DoubleToInt(double a) {
+        return ((int) Math.round(a));
+    }
+
+    /* Selects pixels in rectangular area of width 'scanWidth' around the 'rectCenter' and
+     * calculates the average RGB values of those pixels. This gives much more accurate
+     * result than single pixel, since there is some noise in most mobile cameras.
+     */
+    private double [] CalcAvgCenterCols(Mat frame_in, Point rectCenter, int scanWidth) {
+
+        int totalPixels = scanWidth*scanWidth;
+        int scanStartX = DoubleToInt(rectCenter.x) - (scanWidth/2);
+        int scanStartY = DoubleToInt(rectCenter.y) - (scanWidth/2);
+
+        double[] frameCols;
+        double [] avgCols = new double[3];
+
+        for (int i=0; i<scanWidth; i++) {
+            for (int e=0; e<scanWidth; e++) {
+
+                frameCols = frame_in.get(scanStartY + e, scanStartX + i);
+                avgCols[0] += frameCols[0];
+                avgCols[1] += frameCols[1];
+                avgCols[2] += frameCols[2];
+            }
+        }
+
+        avgCols[0] = avgCols[0] / totalPixels;
+        avgCols[1] = avgCols[1] / totalPixels;
+        avgCols[2] = avgCols[2] / totalPixels;
+
+        return avgCols;
+    }
+
+
+    /* THE MAIN PROCESSING FUNCTION FOR IMAGE FRAME */
     public synchronized void ProcessFrame(Mat frame_in) {
 
         Mat frame = frame_in.clone();
@@ -122,6 +171,8 @@ public class RefObjDetector {
         rotRect = Imgproc.minAreaRect(curve);
 
         CalcRotRectContour();
+
+        rectCenterCols = CalcAvgCenterCols(frame_in, rotRect.center, 4);
 
         //Log.d(TAG, Double.toString(biggestContourArea));
     }
