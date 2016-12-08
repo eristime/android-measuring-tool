@@ -5,28 +5,43 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Janne on 6.12.2016.
+ *
  */
 
 public class RefObjDetector {
 
     /* CLASS VARS */
-    private Rect refRect;
     private RotatedRect rotRect;
     private double avgSideLen;
     private List<MatOfPoint> rotRectCnt;
+    double rectArea;
+    double minContourArea;
     private double[] rectCenterCols;
+    private double refHue;
+    private double colThreshold;
+    private double satMinimum;
 
 
     /* GETTERS */
+
+    public double getRectArea() {
+        return rectArea;
+    }
+
+    public double getMinContourArea() {
+        return minContourArea;
+    }
 
     public double[] getRectCenterCols() {
         return rectCenterCols;
@@ -40,21 +55,20 @@ public class RefObjDetector {
         return avgSideLen;
     }
 
-    public Rect getRefRect() {
-        return refRect;
-    }
-
     public RotatedRect getRotRect() {
         return rotRect;
     }
 
 
     /* CONSTRUCTOR */
-    public RefObjDetector() {
+    public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {
 
-        refRect = new Rect(0,0,0,0);
-        rotRect = new RotatedRect();
+        rotRect = null;
         rotRectCnt = new ArrayList<>();
+        minContourArea = 100;
+        this.refHue = referenceHue;
+        this.colThreshold = colorThreshold;
+        this.satMinimum = saturationMinimum;
     }
 
 
@@ -99,6 +113,9 @@ public class RefObjDetector {
         int scanStartX = DoubleToInt(rectCenter.x) - (scanWidth/2);
         int scanStartY = DoubleToInt(rectCenter.y) - (scanWidth/2);
 
+        if (scanStartX < 0) { scanStartX = 0; }
+        if (scanStartY < 0) { scanStartY = 0; }
+
         double[] frameCols;
         double [] avgCols = new double[3];
 
@@ -124,14 +141,15 @@ public class RefObjDetector {
     public synchronized void ProcessFrame(Mat frame_in) {
 
         Mat frame = frame_in.clone();
-        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        Mat frameHSV = frame_in.clone();
+
+        List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
         Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.cvtColor(frameHSV, frameHSV, Imgproc.COLOR_RGB2HSV);
 
-        Core.bitwise_not(frame, frame);     // Seems to improve detection, maybe. Test more..
-
-        Imgproc.Canny(frame, frame, 50.0, 175.0);
+        Imgproc.Canny(frame, frame, 50.0, 130.0);
         Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
         //Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
 
@@ -147,14 +165,30 @@ public class RefObjDetector {
         double biggestContourArea = 0;
 
         for (int i=0; i<contoursCounter; i++) {
-            double area = Imgproc.contourArea(contours.get(i));
-            if (area > biggestContourArea && area < 800000) {
+
+            MatOfPoint contour = contours.get(i);
+            double area = Imgproc.contourArea(contour);
+
+            Moments m = Imgproc.moments(contour);
+
+            double centerX = m.get_m10() / m.get_m00();
+            double centerY = m.get_m01() / m.get_m00();
+
+            double[] contourCols = CalcAvgCenterCols(frameHSV, new Point(DoubleToInt(centerX), DoubleToInt(centerY)), 4);
+            double hue = contourCols[0];
+            double sat = contourCols[1];
+
+            boolean hueOK = (hue > (refHue - colThreshold)) && (hue < (refHue + colThreshold));
+
+            if (area > biggestContourArea && area < 800000 && hueOK && sat >= satMinimum && area > minContourArea) {
                 biggestContour_i = i;
                 biggestContourArea = area;
+                rectCenterCols = contourCols;
+                rectArea = area;
             }
         }
 
-        List<MatOfPoint> bigContour = new ArrayList<MatOfPoint>();
+        List<MatOfPoint> bigContour = new ArrayList<>();
         bigContour.add(contours.get(biggestContour_i));
 
         MatOfPoint2f contour2f = new MatOfPoint2f(bigContour.get(0).toArray());
@@ -164,16 +198,10 @@ public class RefObjDetector {
 
         Imgproc.approxPolyDP(contour2f, curve, dist, true);
 
-        MatOfPoint biggestContour = new MatOfPoint(curve.toArray());
-
-        refRect = Imgproc.boundingRect(biggestContour);
-
         rotRect = Imgproc.minAreaRect(curve);
 
-        CalcRotRectContour();
+        CalcRotRectContour();   // This is the contour for on-screen drawing
 
-        rectCenterCols = CalcAvgCenterCols(frame_in, rotRect.center, 4);
-
-        //Log.d(TAG, Double.toString(biggestContourArea));
+        //rectCenterCols = CalcAvgCenterCols(frameHSV, rotRect.center, 4);
     }
 }
