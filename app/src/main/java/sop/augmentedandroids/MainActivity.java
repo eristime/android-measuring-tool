@@ -46,6 +46,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
     Scalar textCol = new Scalar(255, 0, 255);
 
     RefObjDetector cubeDetector;
+    MeasObjDetector measDetector;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
