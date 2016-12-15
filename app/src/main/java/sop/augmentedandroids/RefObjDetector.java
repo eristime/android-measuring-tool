@@ -31,6 +31,7 @@ public class RefObjDetector {
     private double refHue;
     private double colThreshold;
     private double satMinimum;
+    private int numberOfDilations = 1;
 
 
     /* GETTERS */
@@ -59,6 +60,11 @@ public class RefObjDetector {
         return rotRect;
     }
 
+
+    /* SETTERS */
+    public void setNumberOfDilations(int n){
+        this.numberOfDilations = n;
+    }
 
     /* CONSTRUCTOR */
     public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {

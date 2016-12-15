@@ -4,17 +4,19 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+    android:screenOrientation="landscape"
     tools:context="sop.augmentedandroids.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/textView" />
+    <org.opencv.android.JavaCameraView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/camera_main_java_surface_view"/>
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar" />
+
 </RelativeLayout>

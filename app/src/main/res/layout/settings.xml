@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
+    <TextView
+        android:id="@+id/text_frameskip"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="Frameskip"/>
+
+    <EditText
+        android:id="@+id/edit_text_frameskip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+    <TextView
+        android:id="@+id/text_dilations"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="The amount of dilations" />
+    <EditText
+        android:id="@+id/edit_text_dilations"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/hue_text"
+            android:layout_width="400dp"
+            android:layout_height="wrap_content"
+            android:text="Hue"
+            android:layout_weight="0.7"/>
+        <TextView
+            android:id="@+id/hue_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd" />
+    </LinearLayout>
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/hue_bar"
+        android:max="360" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/saturation_text"
+            android:layout_width="400dp"
+            android:layout_height="wrap_content"
+            android:text="Saturation"
+            android:layout_weight="0.7"/>
+        <TextView
+            android:id="@+id/saturation_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd" />
+    </LinearLayout>
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/saturation_bar"
+        android:max="100" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/value_text"
+            android:layout_width="400dp"
+            android:layout_height="wrap_content"
+            android:text="Value"
+            android:layout_weight="0.7"/>
+        <TextView
+            android:id="@+id/value_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd" />
+    </LinearLayout>
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/value_bar"
+        android:max="100" />
+
+    <Button android:id="@+id/button_back"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Apply"
+        android:onClick="onApplySettings" />
+
+</LinearLayout>

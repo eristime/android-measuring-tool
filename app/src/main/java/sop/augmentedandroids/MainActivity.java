@@ -7,31 +7,34 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
-import org.opencv.android.JavaCameraView;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-public class MainActivity extends Activity implements CvCameraViewListener, View.OnTouchListener {
+public class MainActivity extends AppCompatActivity implements CvCameraViewListener, View.OnTouchListener {
 
     private static final String TAG = "Sample::SOP::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private static int frameskip = 8;
     private static int frame_i = 0;
+    private static int number_of_dilations = 1;
 
     Camera c = Camera.open();
 
@@ -72,12 +75,29 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
         Camera.Parameters params = c.getParameters();
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+
+        // Log supported camera resolutions
+        for( Camera.Size size: params.getSupportedPreviewSizes()){
+            Log.d(TAG, Integer.toString(size.width) + "x"  + Integer.toString(size.height));
+        }
+        // params.setPreviewSize(1280, 720);
         c.setParameters(params);
 
-        mOpenCvCameraView = (CameraBridgeViewBase) new JavaCameraView(this, -1);
-        setContentView(mOpenCvCameraView);
+        setContentView(R.layout.activity_main);
+
+        // Initialize UI
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        myToolbar.setTitle("");
+        setSupportActionBar(myToolbar);
+
+
+        // Initialize OpenCV camera
+        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_main_java_surface_view);
+        mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 
+        // set max size to 1280 x 720 to increase performance
+        mOpenCvCameraView.setMaxFrameSize(1280, 720);
         mOpenCvCameraView.enableFpsMeter();
 
         cubeDetector = new RefObjDetector(60.0, 12.0, 120.0);
@@ -104,8 +124,38 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                // Create a new intent and pass frameskip and number_of_dilations for settingsActivity when Settings button is clicked
+                Log.d("onOptionsItemSelected", "Action_settings selected.");
+                Intent intent = new Intent(this, SettingsActivity.class);
+                intent.putExtra("currentFrameSkip", Integer.toString(frameskip));
+                intent.putExtra("currentNumberOfDilations", Integer.toString(number_of_dilations));
+                startActivityForResult(intent, 1);
+                return true;
+        }
+        return true;
+    }
+    // Activates when Apply button pressed in SettingsActivity
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            Log.v(TAG, "Requestcode OK.");
+            if(resultCode == RESULT_OK){
+                // Set a new frameskip value if it exists, otherwise go with the previous one
+                frameskip = data.getIntExtra("frameskip", frameskip);
+                // Set a new number_of_dilations value if it exists, otherwise go with the previous one
+                number_of_dilations = data.getIntExtra("number_of_dilations", number_of_dilations);
+                cubeDetector.setNumberOfDilations(number_of_dilations);
+            }
+        }
+    }
+
 
     public void onCameraViewStarted(int width, int height) {
     }
