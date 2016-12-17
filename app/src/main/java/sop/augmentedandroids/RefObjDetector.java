@@ -31,17 +31,13 @@ public class RefObjDetector {
     private double refHue;
     private double colThreshold;
     private double satMinimum;
-    private int numberOfDilations = 1;
+    private int numberOfDilations;
 
 
     /* GETTERS */
 
     public double getRectArea() {
         return rectArea;
-    }
-
-    public double getMinContourArea() {
-        return minContourArea;
     }
 
     public double[] getRectCenterCols() {
@@ -52,9 +48,7 @@ public class RefObjDetector {
         return rotRectCnt;
     }
 
-    public double getAvgSideLen() {
-        return avgSideLen;
-    }
+    public double getAvgSideLen() { return avgSideLen; }
 
     public RotatedRect getRotRect() {
         return rotRect;
@@ -71,7 +65,8 @@ public class RefObjDetector {
 
         rotRect = null;
         rotRectCnt = new ArrayList<>();
-        minContourArea = 100;
+        minContourArea = 500;
+        numberOfDilations = 1;
         this.refHue = referenceHue;
         this.colThreshold = colorThreshold;
         this.satMinimum = saturationMinimum;
@@ -152,8 +147,8 @@ public class RefObjDetector {
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
-        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.cvtColor(frameHSV, frameHSV, Imgproc.COLOR_RGB2HSV);
+        Imgproc.cvtColor(frame_in, frame, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cvtColor(frame_in, frameHSV, Imgproc.COLOR_BGR2HSV);
 
         Imgproc.Canny(frame, frame, 50.0, 130.0);
         Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
@@ -173,7 +168,7 @@ public class RefObjDetector {
         for (int i=0; i<contoursCounter; i++) {
 
             MatOfPoint contour = contours.get(i);
-            double area = Imgproc.contourArea(contour);
+            double area = Imgproc.contourArea(contour, true);
 
             Moments m = Imgproc.moments(contour);
 

@@ -4,6 +4,7 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final String TAG = "Sample::SOP::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
 
-    private static int frameskip = 8;
+    private static int frameskip = 30;
     private static int frame_i = 0;
     private static int number_of_dilations = 1;
 
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setMaxFrameSize(1280, 720);
         mOpenCvCameraView.enableFpsMeter();
 
-        cubeDetector = new RefObjDetector(60.0, 12.0, 120.0);
+        cubeDetector = new RefObjDetector(56.0, 12.0, 120.0);
     }
 
     @Override
@@ -176,18 +177,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             frame_i = 0;
             cubeDetector.ProcessFrame(inputFrame);
             rotRect = cubeDetector.getRotRect();
+
+            //CornerTest(inputFrame);
         }
-
-
-        // ON-SCREEN DRAWING
-
 
         // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
 
         // Write average rect side length on-screen
-        NumberFormat nF = new DecimalFormat("#0.00");
+        NumberFormat nF = new DecimalFormat("#0.0");
         Core.putText(inputFrame, "avg side length: " + nF.format(cubeDetector.getAvgSideLen()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
 
@@ -196,9 +195,38 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         Core.putText(inputFrame, "area: " + nF.format(cubeDetector.getRectArea()), new Point(10.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
-        Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), Core.FONT_HERSHEY_PLAIN, 2, textCol, 1);
+        if(rotRect != null) {
+            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), Core.FONT_HERSHEY_PLAIN, 2, textCol, 1);
+        }
 
         return inputFrame;  // Return the final edited image frame
+
+    }
+
+    private void CornerTest(Mat inputFrame) {
+
+        Mat dst = new Mat(inputFrame.size(), CvType.CV_32FC1);
+        Mat dst_norm = new Mat();
+        Mat dst_norm_scaled = new Mat();
+
+        Mat klooni = inputFrame.clone();
+        Imgproc.cvtColor(klooni, klooni, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cornerHarris(klooni, dst, 2, 3, 0.04, Imgproc.BORDER_DEFAULT);
+        //Imgproc.dilate(corners, corners, new Mat(), new Point(-1,-1), 2);
+
+        Core.normalize(dst, dst_norm, 0, 255, Core.NORM_MINMAX, CvType.CV_32FC1, new Mat());
+
+        Core.convertScaleAbs(dst_norm, dst_norm_scaled);
+
+        for(int j=0; j<dst_norm.rows(); j++)
+        {
+            for(int i=0; i<dst_norm.cols(); i++)
+            {
+                if((int)dst_norm.get(j,i)[0] > 200) {
+                    Core.circle(inputFrame, new Point(i,j), 3, new Scalar(255,255,0), 1);
+                }
+            }
+        }
     }
 
     private void DrawRotRectCenterData(Mat frame_in) {
