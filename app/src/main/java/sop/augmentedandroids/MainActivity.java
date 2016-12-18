@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int number_of_dilations = 1;
 
     Camera c = Camera.open();
-    Camera.Parameters params = c.getParameters();
 
     static RotatedRect rotRect = new RotatedRect();
 
@@ -77,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         Log.d(TAG, "Creating and setting view");
 
+        Camera.Parameters params = c.getParameters();
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         c.setParameters(params);
 
@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         super.onDestroy();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
+        c.release();
     }
 
     @Override
