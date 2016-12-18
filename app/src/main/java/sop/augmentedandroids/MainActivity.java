@@ -3,6 +3,7 @@ package sop.augmentedandroids;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -13,8 +14,11 @@ import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -25,8 +29,13 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener, View.OnTouchListener {
 
@@ -34,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private static boolean detecting = true;
+    private static boolean saving = false;
 
     private static int frameskip = 30;
     private static int frame_i = 0;
@@ -145,6 +155,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             case R.id.action_detection_toggle:
                 detecting = !detecting;
                 return  true;
+
+            case R.id.action_save_image:
+                saving = true;
+                return true;
         }
         return true;
     }
@@ -191,8 +205,41 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             inputFrame = OnScreenDrawings(inputFrame);
         }
 
+        if(saving) {
+            saving = false;
+            SaveImage(inputFrame);
+        }
+
         return inputFrame;  // Return the final (possibly edited) image frame
 
+    }
+
+    private void SaveImage(Mat mImage) {
+        Bitmap bmap;
+        try {
+            bmap = Bitmap.createBitmap(mImage.cols(), mImage.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mImage, bmap);
+
+            String savePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures";
+            File dir = new File(savePath);
+            if(!dir.isDirectory()) {
+                dir.mkdir();
+            }
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yyyy_HH_mm_ss");
+            Calendar c = Calendar.getInstance();
+            String fname = dateFormat.format(c.getTime());
+
+            File f = new File(savePath, fname + ".jpg");
+
+            FileOutputStream fout = new FileOutputStream(f);
+            bmap.compress(Bitmap.CompressFormat.JPEG, 100, fout);
+            fout.flush();
+            fout.close();
+        } catch (Exception e) {
+            Log.d(TAG, e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private Mat OnScreenDrawings(Mat inputFrame) {

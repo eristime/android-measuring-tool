@@ -3,5 +3,6 @@
     <string name="main_menu_item1">Settings</string>
     <string name="main_menu_item2">Dilate iterations</string>
     <string name="detection_item">Toggle Detection</string>
+    <string name="save_image_item">Save image</string>
 
 </resources>

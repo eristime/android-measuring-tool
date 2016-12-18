@@ -2,13 +2,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_settings"
-        android:title="@string/main_menu_item1" />
+        android:id="@+id/action_detection_toggle"
+        android:title="@string/detection_item" />
+    <item
+        android:id="@+id/action_save_image"
+        android:title="@string/save_image_item" />
     <item
         android:id="@+id/action_flaslight"
         android:title="Flashlight" />
     <item
-        android:id="@+id/action_detection_toggle"
-        android:title="@string/detection_item" />
+        android:id="@+id/action_settings"
+        android:title="@string/main_menu_item1" />
     <!-- app:showAsAction="never" -->
 </menu>
