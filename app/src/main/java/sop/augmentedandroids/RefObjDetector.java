@@ -21,6 +21,7 @@ public class RefObjDetector {
     /* CLASS VARS */
     private RotatedRect rotRect;
     private double avgSideLen;
+    private double rectSideRatio;
     private List<MatOfPoint> rotRectCnt;
     private double rectArea;
     private double minContourArea;
@@ -29,6 +30,7 @@ public class RefObjDetector {
     private double colThreshold;
     private double satMinimum;
     private int numberOfDilations;
+    private double sideRatioLimit;
 
 
     /* GETTERS */
@@ -47,6 +49,8 @@ public class RefObjDetector {
 
     public double getAvgSideLen() { return avgSideLen; }
 
+    public double getRectSideRatio() { return rectSideRatio; }
+
     public RotatedRect getRotRect() {
         return rotRect;
     }
@@ -64,6 +68,7 @@ public class RefObjDetector {
         rotRectCnt = new ArrayList<>();
         minContourArea = 500;
         numberOfDilations = 1;
+        sideRatioLimit = 1.45;
         this.refHue = referenceHue;
         this.colThreshold = colorThreshold;
         this.satMinimum = saturationMinimum;
@@ -80,6 +85,17 @@ public class RefObjDetector {
         return ((L1 + L2 + L3 + L4)/4);
     }
 
+    private double CalcRectSideRatio(Point[] ps) {
+        double L1 = GetDist(ps[0], ps[1]);
+        double L2 = GetDist(ps[1], ps[2]);
+
+        if(L1 > L2) {
+            return L1/L2;
+        } else {
+            return L2/L1;
+        }
+    }
+
     private double GetDist(Point p1, Point p2) {
         return Math.sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
     }
@@ -90,7 +106,7 @@ public class RefObjDetector {
         Point[] ps = new Point[4];
         rotRect.points(ps);
 
-        avgSideLen = RectAvgLength(ps);
+        //avgSideLen = RectAvgLength(ps);
 
         List<MatOfPoint> cnt = new ArrayList<>();
         cnt.add(new MatOfPoint(ps));
@@ -141,6 +157,8 @@ public class RefObjDetector {
         Mat frame = frame_in.clone();
         Mat frameHSV = frame_in.clone();
 
+        boolean rectUpdated = false;
+
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
@@ -159,7 +177,6 @@ public class RefObjDetector {
             return;
         }
 
-        int biggestContour_i = 0;
         double biggestContourArea = 0;
 
         for (int i=0; i<contoursCounter; i++) {
@@ -177,29 +194,34 @@ public class RefObjDetector {
             double sat = contourCols[1];
 
             boolean hueOK = (hue > (refHue - colThreshold)) && (hue < (refHue + colThreshold));
+            if (hueOK) {
 
-            if (area > biggestContourArea && area < 800000 && hueOK && sat >= satMinimum && area > minContourArea) {
-                biggestContour_i = i;
-                biggestContourArea = area;
-                rectCenterCols = contourCols;
-                rectArea = area;
+                MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+                MatOfPoint2f curve = new MatOfPoint2f();
+
+                double dist = Imgproc.arcLength(contour2f, true)*0.02;
+
+                Imgproc.approxPolyDP(contour2f, curve, dist, true);
+
+                RotatedRect r = Imgproc.minAreaRect(curve);
+                Point[] ps = new Point[4];
+                r.points(ps);
+                double sideRatio = CalcRectSideRatio(ps);
+
+                if (sideRatio <= sideRatioLimit && area > biggestContourArea && area < 800000 && sat >= satMinimum && area > minContourArea) {
+                    biggestContourArea = area;
+                    rectCenterCols = contourCols;
+                    rectArea = area;
+                    rectSideRatio = sideRatio;
+                    rotRect = r;
+                    rectUpdated = true;
+                }
             }
         }
 
-        List<MatOfPoint> bigContour = new ArrayList<>();
-        bigContour.add(contours.get(biggestContour_i));
+        if (rectUpdated) {
+            CalcRotRectContour();   // This is the contour for on-screen drawing
+        }
 
-        MatOfPoint2f contour2f = new MatOfPoint2f(bigContour.get(0).toArray());
-        MatOfPoint2f curve = new MatOfPoint2f();
-
-        double dist = Imgproc.arcLength(contour2f, true)*0.02;
-
-        Imgproc.approxPolyDP(contour2f, curve, dist, true);
-
-        rotRect = Imgproc.minAreaRect(curve);
-
-        CalcRotRectContour();   // This is the contour for on-screen drawing
-
-        //rectCenterCols = CalcAvgCenterCols(frameHSV, rotRect.center, 4);
     }
 }

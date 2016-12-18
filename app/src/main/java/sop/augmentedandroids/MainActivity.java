@@ -18,7 +18,6 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -31,7 +30,6 @@ import android.view.WindowManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -246,11 +244,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
-
+/*
         // Write average rect side length on-screen
         NumberFormat nF = new DecimalFormat("#0.0");
         Core.putText(inputFrame, "avg side length: " + nF.format(cubeDetector.getAvgSideLen()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-
+*/
+        // Write rect side ratio on-screen
+        NumberFormat nF = new DecimalFormat("#0.00");
+        Core.putText(inputFrame, "rectangle side ratio: " + nF.format(cubeDetector.getRectSideRatio()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
 
         // Draw a circle marker and write color info of rotated rectangle center point
         DrawRotRectCenterData(inputFrame);
