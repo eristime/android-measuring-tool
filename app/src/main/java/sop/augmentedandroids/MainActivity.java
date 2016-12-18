@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static boolean detecting = true;
     private static boolean saving = false;
 
+    private static double cmToPxRatio = 1.0;
+
     private static int frameskip = 30;
     private static int frame_i = 0;
     private static int number_of_dilations = 1;
@@ -51,8 +53,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     static RotatedRect rotRect = new RotatedRect();
 
+
+    NumberFormat nF = new DecimalFormat("#0.00");
+    NumberFormat nF2 = new DecimalFormat("#0.0000");
+
     Scalar textCol = new Scalar(10, 255, 10);
     Scalar graphCol = new Scalar(255, 0, 255);
+
+    int uiFont = Core.FONT_HERSHEY_PLAIN;
+    int uiTextScale = 2;
+    int uiTextThickness = 3;
 
     RefObjDetector cubeDetector;
 
@@ -176,11 +186,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
 
-    public void onCameraViewStarted(int width, int height) {
-    }
+    public void onCameraViewStarted(int width, int height) {}
 
-    public void onCameraViewStopped() {
-    }
+    public void onCameraViewStopped() {}
 
     public boolean onTouch(View view, MotionEvent event) {
         return false;
@@ -197,6 +205,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 cubeDetector.ProcessFrame(inputFrame);
                 rotRect = cubeDetector.getRotRect();
 
+                cmToPxRatio = (5.0 / cubeDetector.getShortSideLength());
+
                 //CornerTest(inputFrame);
             }
 
@@ -209,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         return inputFrame;  // Return the final (possibly edited) image frame
-
     }
 
     private void SaveImage(Mat mImage) {
@@ -244,22 +253,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
-/*
-        // Write average rect side length on-screen
-        NumberFormat nF = new DecimalFormat("#0.0");
-        Core.putText(inputFrame, "avg side length: " + nF.format(cubeDetector.getAvgSideLen()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-*/
         // Write rect side ratio on-screen
-        NumberFormat nF = new DecimalFormat("#0.00");
-        Core.putText(inputFrame, "rectangle side ratio: " + nF.format(cubeDetector.getRectSideRatio()), new Point(10.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
+        Core.putText(inputFrame, "rectangle side ratio: " + nF.format(cubeDetector.getRectSideRatio()), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "area: " + nF.format(cubeDetector.getRectArea()), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "cm/px ratio: " + nF2.format(cmToPxRatio), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
 
         // Draw a circle marker and write color info of rotated rectangle center point
         DrawRotRectCenterData(inputFrame);
 
-        Core.putText(inputFrame, "area: " + nF.format(cubeDetector.getRectArea()), new Point(10.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-
         if(rotRect != null) {
-            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), Core.FONT_HERSHEY_PLAIN, 2, textCol, 1);
+            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), uiFont, 2, textCol, 1);
         }
 
         return inputFrame;
@@ -294,14 +297,11 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private void DrawRotRectCenterData(Mat frame_in) {
 
         double [] rectCenterCols = cubeDetector.getRectCenterCols();
-
         // Workaround for app crash in a case where couldn't acquire color values of rect center
         if(rectCenterCols != null) {
-
-            Core.putText(frame_in, "H: " + String.valueOf(rectCenterCols[0]), new Point(900.0, 40), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(frame_in, "S: " + String.valueOf(rectCenterCols[1]), new Point(900.0, 100), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-            Core.putText(frame_in, "V: " + String.valueOf(rectCenterCols[2]), new Point(900.0, 160), Core.FONT_HERSHEY_PLAIN, 3, textCol, 3);
-
+            Core.putText(frame_in, "H: " + String.valueOf(rectCenterCols[0]), new Point(900.0, 40), uiFont, uiTextScale, textCol, uiTextThickness);
+            Core.putText(frame_in, "S: " + String.valueOf(rectCenterCols[1]), new Point(900.0, 80), uiFont, uiTextScale, textCol, uiTextThickness);
+            Core.putText(frame_in, "V: " + String.valueOf(rectCenterCols[2]), new Point(900.0, 120), uiFont, uiTextScale, textCol, uiTextThickness);
             Core.circle(frame_in, rotRect.center, 10, graphCol, 3);
         }
     }

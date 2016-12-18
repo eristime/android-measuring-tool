@@ -20,8 +20,9 @@ public class RefObjDetector {
 
     /* CLASS VARS */
     private RotatedRect rotRect;
-    private double avgSideLen;
     private double rectSideRatio;
+    private double sideRatioLimit;
+    private double shortSideLength;
     private List<MatOfPoint> rotRectCnt;
     private double rectArea;
     private double minContourArea;
@@ -30,7 +31,6 @@ public class RefObjDetector {
     private double colThreshold;
     private double satMinimum;
     private int numberOfDilations;
-    private double sideRatioLimit;
 
 
     /* GETTERS */
@@ -47,9 +47,9 @@ public class RefObjDetector {
         return rotRectCnt;
     }
 
-    public double getAvgSideLen() { return avgSideLen; }
-
     public double getRectSideRatio() { return rectSideRatio; }
+
+    public double getShortSideLength() { return shortSideLength; }
 
     public RotatedRect getRotRect() {
         return rotRect;
@@ -206,7 +206,19 @@ public class RefObjDetector {
                 RotatedRect r = Imgproc.minAreaRect(curve);
                 Point[] ps = new Point[4];
                 r.points(ps);
-                double sideRatio = CalcRectSideRatio(ps);
+
+                double sideRatio, shortSide;
+
+                double L1 = GetDist(ps[0], ps[1]);
+                double L2 = GetDist(ps[1], ps[2]);
+
+                if(L1 > L2) {
+                    sideRatio = L1/L2;
+                    shortSide = L2;
+                } else {
+                    sideRatio = L2/L1;
+                    shortSide = L1;
+                }
 
                 if (sideRatio <= sideRatioLimit && area > biggestContourArea && area < 800000 && sat >= satMinimum && area > minContourArea) {
                     biggestContourArea = area;
@@ -214,6 +226,7 @@ public class RefObjDetector {
                     rectArea = area;
                     rectSideRatio = sideRatio;
                     rotRect = r;
+                    shortSideLength = shortSide;
                     rectUpdated = true;
                 }
             }
