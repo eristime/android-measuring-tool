@@ -1,13 +1,10 @@
 package sop.augmentedandroids;
 
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
@@ -25,8 +22,8 @@ public class RefObjDetector {
     private RotatedRect rotRect;
     private double avgSideLen;
     private List<MatOfPoint> rotRectCnt;
-    double rectArea;
-    double minContourArea;
+    private double rectArea;
+    private double minContourArea;
     private double[] rectCenterCols;
     private double refHue;
     private double colThreshold;
@@ -151,7 +148,7 @@ public class RefObjDetector {
         Imgproc.cvtColor(frame_in, frameHSV, Imgproc.COLOR_BGR2HSV);
 
         Imgproc.Canny(frame, frame, 50.0, 130.0);
-        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
+        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), numberOfDilations);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
         //Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
 
         Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);

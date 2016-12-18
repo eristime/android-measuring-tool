@@ -2,5 +2,6 @@
     <string name="app_name">Augmented Androids</string>
     <string name="main_menu_item1">Settings</string>
     <string name="main_menu_item2">Dilate iterations</string>
+    <string name="detection_item">Toggle Detection</string>
 
 </resources>

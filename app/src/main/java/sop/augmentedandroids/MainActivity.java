@@ -33,11 +33,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final String TAG = "Sample::SOP::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
 
+    private static boolean detecting = true;
+
     private static int frameskip = 30;
     private static int frame_i = 0;
     private static int number_of_dilations = 1;
 
     Camera c = Camera.open();
+    Camera.Parameters params = c.getParameters();
 
     static RotatedRect rotRect = new RotatedRect();
 
@@ -74,15 +77,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         Log.d(TAG, "Creating and setting view");
 
-        Camera.Parameters params = c.getParameters();
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        c.setParameters(params);
 
         // Log supported camera resolutions
         for( Camera.Size size: params.getSupportedPreviewSizes()){
             Log.d(TAG, Integer.toString(size.width) + "x"  + Integer.toString(size.height));
         }
-        // params.setPreviewSize(1280, 720);
-        c.setParameters(params);
 
         setContentView(R.layout.activity_main);
 
@@ -139,6 +140,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 intent.putExtra("currentNumberOfDilations", Integer.toString(number_of_dilations));
                 startActivityForResult(intent, 1);
                 return true;
+
+            case R.id.action_detection_toggle:
+                detecting = !detecting;
+                return  true;
         }
         return true;
     }
@@ -170,17 +175,26 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public Mat onCameraFrame(Mat inputFrame) {
 
-        // Skip calculating contour for as many frames as indicated by 'frameskip' variable
-        if(frame_i < frameskip) {
-            frame_i++;
-        } else {
-            frame_i = 0;
-            cubeDetector.ProcessFrame(inputFrame);
-            rotRect = cubeDetector.getRotRect();
+        if(detecting) {
+            // Skip calculating contour for as many frames as indicated by 'frameskip' variable
+            if (frame_i < frameskip) {
+                frame_i++;
+            } else {
+                frame_i = 0;
+                cubeDetector.ProcessFrame(inputFrame);
+                rotRect = cubeDetector.getRotRect();
 
-            //CornerTest(inputFrame);
+                //CornerTest(inputFrame);
+            }
+
+            inputFrame = OnScreenDrawings(inputFrame);
         }
 
+        return inputFrame;  // Return the final (possibly edited) image frame
+
+    }
+
+    private Mat OnScreenDrawings(Mat inputFrame) {
         // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
@@ -199,8 +213,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), Core.FONT_HERSHEY_PLAIN, 2, textCol, 1);
         }
 
-        return inputFrame;  // Return the final edited image frame
-
+        return inputFrame;
     }
 
     private void CornerTest(Mat inputFrame) {
