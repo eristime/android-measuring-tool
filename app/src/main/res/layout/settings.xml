@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:rsb="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,12 +14,12 @@
         android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:text="Frameskip"/>
-
     <EditText
         android:id="@+id/edit_text_frameskip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="number" />
+
     <TextView
         android:id="@+id/text_dilations"
         android:layout_width="400dp"
@@ -26,35 +30,54 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="number" />
+
+    <TextView
+        android:id="@+id/text_min_contour_area"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="Minimum contour area"/>
+    <EditText
+        android:id="@+id/edit_text_min_contour_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
+
+    <TextView
+        android:id="@+id/text_side_ratio_limit"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="Side ratio limit"/>
+    <EditText
+        android:id="@+id/edit_text_side_ratio_limit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/hue_text"
-            android:layout_width="400dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Hue"
             android:layout_weight="0.7"/>
-        <TextView
-            android:id="@+id/hue_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAlignment="textEnd" />
+
     </LinearLayout>
 
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+    <com.yahoo.mobile.client.android.util.rangeseekbar.RangeSeekBar
         android:id="@+id/hue_bar"
-        android:max="360" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/saturation_text"
-            android:layout_width="400dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Saturation"
             android:layout_weight="0.7"/>
@@ -64,19 +87,19 @@
             android:layout_height="wrap_content"
             android:textAlignment="textEnd" />
     </LinearLayout>
-
     <SeekBar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/saturation_bar"
-        android:max="100" />
+        android:max="255" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/value_text"
-            android:layout_width="400dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Value"
             android:layout_weight="0.7"/>
@@ -86,12 +109,11 @@
             android:layout_height="wrap_content"
             android:textAlignment="textEnd" />
     </LinearLayout>
-
     <SeekBar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/value_bar"
-        android:max="100" />
+        android:max="255" />
 
     <Button android:id="@+id/button_back"
         android:layout_width="match_parent"
@@ -100,3 +122,4 @@
         android:onClick="onApplySettings" />
 
 </LinearLayout>
+</ScrollView>

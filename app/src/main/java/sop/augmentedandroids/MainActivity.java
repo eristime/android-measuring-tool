@@ -47,7 +47,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private static int frameskip = 30;
     private static int frame_i = 0;
-    private static int number_of_dilations = 1;
+    private static int numberOfDilations = 1;
+    private static double minHue = 44.0;
+    private static double maxHue = 68.0;
+    private static double saturation = 0;
+    private static int value = 0;
+    private static double minContourArea = 500;
+    private static double sideRatioLimit = 1.45;
+
 
     Camera c = Camera.open();
 
@@ -152,11 +159,15 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
-                // Create a new intent and pass frameskip and number_of_dilations for settingsActivity when Settings button is clicked
+                // Create a new intent and pass parameters for settingsActivity when Settings button is clicked
                 Log.d("onOptionsItemSelected", "Action_settings selected.");
                 Intent intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra("currentFrameSkip", Integer.toString(frameskip));
-                intent.putExtra("currentNumberOfDilations", Integer.toString(number_of_dilations));
+                intent.putExtra("currentNumberOfDilations", Integer.toString(numberOfDilations));
+                intent.putExtra("currentMinContourArea", Double.toString(minContourArea));
+                intent.putExtra("currentSideRatioLimit", Double.toString(sideRatioLimit));
+                intent.putExtra("minHue", minHue);
+                intent.putExtra("maxHue", maxHue);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -170,17 +181,32 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
         return true;
     }
-    // Activates when Apply button pressed in SettingsActivity
+
+    // Method runs when Apply button is pressed in SettingsActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        /* If data coming from SettingsActivity exists, the method sets variable values accordingly.
+          If a value doesn't exist, the previous value for the variable is selected. */
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             Log.v(TAG, "Requestcode OK.");
             if(resultCode == RESULT_OK){
-                // Set a new frameskip value if it exists, otherwise go with the previous one
+
                 frameskip = data.getIntExtra("frameskip", frameskip);
-                // Set a new number_of_dilations value if it exists, otherwise go with the previous one
-                number_of_dilations = data.getIntExtra("number_of_dilations", number_of_dilations);
-                cubeDetector.setNumberOfDilations(number_of_dilations);
+
+                numberOfDilations = data.getIntExtra("numberOfDilations", numberOfDilations);
+                cubeDetector.setNumberOfDilations(numberOfDilations);
+
+                minContourArea = data.getDoubleExtra("minContourArea", minContourArea);
+                cubeDetector.setMinContourArea(minContourArea);
+
+                sideRatioLimit = data.getDoubleExtra("sideRatioLimit", sideRatioLimit);
+                cubeDetector.setSideRatioLimit(sideRatioLimit);
+
+                minHue = data.getDoubleExtra("minHue", minHue);
+                cubeDetector.setHueMinimum(minHue);
+
+                maxHue = data.getDoubleExtra("maxHue", maxHue);
+                cubeDetector.setHueMaximum(maxHue);
             }
         }
     }
