@@ -87,6 +87,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
         mOpenCvCameraView.enableFpsMeter();
 
         cubeDetector = new RefObjDetector();
+        measDetector = new MeasObjDetector();
     }
 
     @Override
