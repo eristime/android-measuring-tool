@@ -3,9 +3,12 @@ package sop.augmentedandroids;
 import android.util.Log;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
 
 /**
  * \class   This class implements blob detection that can be adjusted via given parameters
@@ -14,10 +17,12 @@ import java.util.List;
  * \notes   All the variables are either local or private. If you need to modify the variables, please see the API functions
  *
  * Usage:
- *          Create local List to store the algorithm return poits (List<MatOfPoint> contours = new ArrayList<>(); for example)
+ *          Create local List to store the algorithm return points (List<MatOfPoint> contours = new ArrayList<>(); for example)
  *          measDetector.detectMeasurable(inputFrame);
  *          contours = measDetector.getContours();
  *          Imgproc.drawContours(inputFrame, contours, -1, new Scalar(0,0,255), 2) - or other measuring preparations
+ *          measDetector.ptsDistance(contour) to set the active blob paramters
+ *          measDetector.getMinLen() / getMaxLen() / getMidpoint()
  */
 
 public class MeasObjDetector {
@@ -34,6 +39,12 @@ public class MeasObjDetector {
     private int max_area = 1000;
     private int min_area = 10;
 
+    private double dist0 = 0.0;
+    private double dist1 = 0.0;
+    private Point middle = new Point();
+
+    RotatedRect _minAreaRect;
+
     /*
     * \brief    Constructor of the class
     * \param    None
@@ -41,6 +52,7 @@ public class MeasObjDetector {
     */
     public MeasObjDetector() {
         contours = new ArrayList<>();
+        _minAreaRect = new RotatedRect();
     }
 
     /*
@@ -84,6 +96,55 @@ public class MeasObjDetector {
     }
 
     /*
+    * \brief    Function to calculate distance between point set and middle point of the system
+    * \param    Int i active blob
+    * \returns  None
+    */
+
+    public void ptsDistance(int i) {
+        _minAreaRect = Imgproc.minAreaRect( Mat(contours[i]) );
+        Point[] pts = new Point[4];
+        _minAreaRect.points(pts);
+
+        double aSub = pts[0].x - pts[1].x;
+        double bSub = pts[0].y - pts[1].y;
+        dist0 = Math.sqrt((aSub * aSub) + (bSub * bSub));
+
+        aSub = pts[1].x - pts[2].x;
+        bSub = pts[1].y - pts[2].y;
+        dist1 = Math.sqrt((aSub * aSub) + (bSub * bSub));
+
+        middle = _minAreaRect.center;
+
+    /*
+    * \brief    Method to get the smaller diameter of the blob
+    * \param    None
+    * \returns  Double diameter
+    */
+
+    public double getMinLen() {
+        return Math.min(dist0, dist1);
+    }
+
+    /*
+    * \brief    Method to get the larger diameter of the blob
+    * \param    None
+    * \returns  Double diameter
+    */
+
+    public double getMaxLen() { return Math.max(dist0, dist1);
+    }
+
+    /*
+    * \brief    Method to get the middle point
+    * \param    None
+    * \returns  Double middle
+    */
+
+    public Point getMidpoint() { return middle;
+    }
+
+    /*
     * \brief    Algorithm for blob detection and filtering
     * \param    inputFrame is the captured frame from public Mat onCameraFrame()
     * \returns  None
@@ -105,7 +166,7 @@ public class MeasObjDetector {
     *        RETR_TREE is used is current implementation but RETR_EXTERNAL could be used to save progress time
     *        \note Please see if the current implementation is good enough
     * (0400) Filter the found blobs using the parameters set (min_area, max_area)
-    *
+    * 
     */
 
     public void detectMeasurable(Mat inputFrame) {
@@ -141,8 +202,6 @@ public class MeasObjDetector {
         /*
         * \note     We still need to adapt the following features before measuring: (TODO)
         *           - adaptiveThreadshold of some kind to avoid unwanted noise in measurements
-        *           - Filtering by convexity or minAreaRect
-        *           - Implement the usage in MainActivty onTouch function
         */
 
     }
