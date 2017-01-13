@@ -47,6 +47,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
     RefObjDetector cubeDetector;
     MeasObjDetector measDetector;
+    Measurements measurements;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -88,6 +89,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
         cubeDetector = new RefObjDetector();
         measDetector = new MeasObjDetector();
+        measurements = new Measurements();
     }
 
     @Override
