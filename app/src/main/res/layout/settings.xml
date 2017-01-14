@@ -9,6 +9,8 @@
     android:layout_height="match_parent"
     android:paddingLeft="16dp"
     android:paddingRight="16dp">
+
+    <!-- Frameskip input -->
     <TextView
         android:id="@+id/text_frameskip"
         android:layout_width="400dp"
@@ -20,6 +22,7 @@
         android:layout_height="wrap_content"
         android:inputType="number" />
 
+    <!-- Dilations input -->
     <TextView
         android:id="@+id/text_dilations"
         android:layout_width="400dp"
@@ -31,6 +34,7 @@
         android:layout_height="wrap_content"
         android:inputType="number" />
 
+    <!-- Min contour area for RefObjDetector input -->
     <TextView
         android:id="@+id/text_min_contour_area"
         android:layout_width="400dp"
@@ -42,6 +46,7 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal" />
 
+    <!-- Side ratio limit for RefObjDetector input  -->
     <TextView
         android:id="@+id/text_side_ratio_limit"
         android:layout_width="400dp"
@@ -53,6 +58,55 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal" />
 
+    <!-- Bound for MeasObj  -->
+    <TextView
+        android:id="@+id/text_meas_obj_bound"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="measObjBound"/>
+    <EditText
+        android:id="@+id/edit_text_meas_obj_bound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+
+    <!-- Max bound for MeasObj  -->
+    <TextView
+        android:id="@+id/text_meas_obj_max_bound"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="Max-bound"/>
+    <EditText
+        android:id="@+id/edit_text_meas_obj_max_bound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+
+    <!-- Max-area for MeasObj  -->
+    <TextView
+        android:id="@+id/text_meas_obj_max_area"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="measObjMaxArea"/>
+    <EditText
+        android:id="@+id/edit_text_meas_obj_max_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+
+    <!-- Min-area for MeasObj -->
+    <TextView
+        android:id="@+id/text_meas_obj_min_area"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="measObjMinArea"/>
+    <EditText
+        android:id="@+id/edit_text_meas_obj_min_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number" />
+
+    <!-- refObjHue -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -63,14 +117,42 @@
             android:layout_height="wrap_content"
             android:text="Hue"
             android:layout_weight="0.7"/>
-
+        <TextView
+            android:id="@+id/hue_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd" />
     </LinearLayout>
-
-    <com.yahoo.mobile.client.android.util.rangeseekbar.RangeSeekBar
-        android:id="@+id/hue_bar"
+    <SeekBar
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:id="@+id/hue_bar"
+        android:max="179" />
 
+    <!-- RefObj color threshold  -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/ref_obj_col_threshold_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="RefObj color threshold"
+            android:layout_weight="0.7"/>
+        <TextView
+            android:id="@+id/ref_obj_col_threshold_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd" />
+    </LinearLayout>
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/ref_obj_col_threshold_bar"
+        android:max="89" />
+
+    <!-- RefObj minimum saturation  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -93,6 +175,7 @@
         android:id="@+id/saturation_bar"
         android:max="255" />
 
+    <!-- RefObj value, not in use  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -115,6 +198,7 @@
         android:id="@+id/value_bar"
         android:max="255" />
 
+    <!-- Apply button -->
     <Button android:id="@+id/button_back"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

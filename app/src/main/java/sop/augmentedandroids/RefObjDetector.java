@@ -28,8 +28,6 @@ public class RefObjDetector {
     private double minContourArea;
     private double[] rectCenterCols;
     private double refHue;
-    private double minHue;
-    private double maxHue;
     private double colThreshold;
     private double satMinimum;
     private int numberOfDilations;
@@ -71,9 +69,6 @@ public class RefObjDetector {
         this.sideRatioLimit = limit;
     }
 
-    public void setHueMinimum(double hue) { this.minHue = hue;}
-
-    public void setHueMaximum(double hue) { this.minHue = hue;}
 
     /* CONSTRUCTOR */
     public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {

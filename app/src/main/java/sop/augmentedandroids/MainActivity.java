@@ -40,20 +40,27 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final String TAG = "Sample::SOP::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
 
-    private static boolean detecting = true;
-    private static boolean saving = false;
-
-    private static double cmToPxRatio = 1.0;
-
+    // MainActivity parameters
     private static int frameskip = 30;
     private static int frame_i = 0;
     private static int numberOfDilations = 1;
-    private static double minHue = 44.0;
-    private static double maxHue = 68.0;
-    private static double saturation = 0;
-    private static int value = 0;
-    private static double minContourArea = 500;
-    private static double sideRatioLimit = 1.45;
+    private static double cmToPxRatio = 1.0;
+    private static boolean detecting = true;
+    private static boolean saving = false;
+
+    // RefObjDetector parameters
+    private static int refObjHue = 56;
+    private static int refObjColThreshold = 12;
+    private static int refObjValue = 0;
+    private static int refObjSatMinimum = 0;
+    private static double refObjMinContourArea = 500;
+    private static double refObjSideRatioLimit = 1.45;
+
+    // MeasObjDetector variables
+    private static int measObjBound = 100;
+    private static int measObjMaxBound = 255;
+    private static int measObjMaxArea = 1000;
+    private static int measObjMinArea = 10;
 
 
     Camera c = Camera.open();
@@ -164,10 +171,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 Intent intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra("currentFrameSkip", Integer.toString(frameskip));
                 intent.putExtra("currentNumberOfDilations", Integer.toString(numberOfDilations));
-                intent.putExtra("currentMinContourArea", Double.toString(minContourArea));
-                intent.putExtra("currentSideRatioLimit", Double.toString(sideRatioLimit));
-                intent.putExtra("minHue", minHue);
-                intent.putExtra("maxHue", maxHue);
+                intent.putExtra("currentMinContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("currentSideRatioLimit", Double.toString(refObjSideRatioLimit));
+                intent.putExtra("currentMeasObjBound", Integer.toString(measObjBound));
+                intent.putExtra("currentMeasObjMaxBound", Integer.toString(measObjMaxBound));
+                intent.putExtra("currentMeasObjMaxArea", Integer.toString(measObjMaxArea));
+                intent.putExtra("currentMeasObjMinArea", Integer.toString(measObjMinArea));
+                //intent.putExtra("minHue", minHue);
+                //intent.putExtra("maxHue", maxHue);
+                intent.putExtra("refObjHue", refObjHue);
+                intent.putExtra("refObjColThreshold", refObjColThreshold);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -191,22 +204,28 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Log.v(TAG, "Requestcode OK.");
             if(resultCode == RESULT_OK){
 
+                // TextView input
                 frameskip = data.getIntExtra("frameskip", frameskip);
 
                 numberOfDilations = data.getIntExtra("numberOfDilations", numberOfDilations);
                 cubeDetector.setNumberOfDilations(numberOfDilations);
 
-                minContourArea = data.getDoubleExtra("minContourArea", minContourArea);
-                cubeDetector.setMinContourArea(minContourArea);
+                refObjMinContourArea = data.getDoubleExtra("refObjMinContourArea", refObjMinContourArea);
+                cubeDetector.setMinContourArea(refObjMinContourArea);
 
-                sideRatioLimit = data.getDoubleExtra("sideRatioLimit", sideRatioLimit);
-                cubeDetector.setSideRatioLimit(sideRatioLimit);
+                refObjSideRatioLimit = data.getDoubleExtra("refObjSideRatioLimit", refObjSideRatioLimit);
+                cubeDetector.setSideRatioLimit(refObjSideRatioLimit);
 
-                minHue = data.getDoubleExtra("minHue", minHue);
-                cubeDetector.setHueMinimum(minHue);
 
-                maxHue = data.getDoubleExtra("maxHue", maxHue);
-                cubeDetector.setHueMaximum(maxHue);
+                measObjBound = data.getIntExtra("measObjBound", measObjBound);
+                measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
+
+                // Seekbar input
+                refObjHue = data.getIntExtra("refObjHue", refObjHue);
+                cubeDetector.setHueMinimum(refObjHue);
+
             }
         }
     }
