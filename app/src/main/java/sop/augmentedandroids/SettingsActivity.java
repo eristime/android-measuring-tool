@@ -32,10 +32,11 @@ public class SettingsActivity extends AppCompatActivity{
     private String measObjMaxArea;
     private String measObjMinArea;
 
+    // TextViews
     private TextView hueTextView;
+    private TextView refObjColThresholdTextView;
     private TextView saturationTextView;
     private TextView valueTextView;
-    private TextView refObjColThresholdTextView;
 
 
     @Override
@@ -121,6 +122,12 @@ public class SettingsActivity extends AppCompatActivity{
         if (refObjHue >= 0 && refObjHue < 179) {
             intent.putExtra("refObjHue", refObjHue);
         }
+        if (refObjColThreshold >= 0 && refObjColThreshold < 89) {
+            intent.putExtra("refObjColThreshold", refObjHue);
+        }
+        if (refObjSatMinimum >= 0 && refObjSatMinimum < 255) {
+            intent.putExtra("refObjSatMinimum", refObjSatMinimum);
+        }
         setResult(RESULT_OK, intent);
         finish();
     }
@@ -130,8 +137,26 @@ public class SettingsActivity extends AppCompatActivity{
         SeekBar refObjColThresholdControl = (SeekBar) findViewById(R.id.ref_obj_col_threshold_bar);
         SeekBar saturationControl = (SeekBar) findViewById(R.id.saturation_bar);
         SeekBar valueControl = (SeekBar) findViewById(R.id.value_bar);
+
+        hueTextView = (TextView) findViewById(R.id.hue_value);
+        refObjColThresholdTextView = (TextView) findViewById(R.id.ref_obj_col_threshold_value);
+        saturationTextView = (TextView) findViewById(R.id.saturation_value);
+        valueTextView = (TextView) findViewById(R.id.value_value);
+
+        refObjHue = getIntent().getIntExtra("refObjHue", 56);
+        refObjColThreshold = getIntent().getIntExtra("refObjColThreshold", 12);
+        refObjSatMinimum = getIntent().getIntExtra("refObjSatMinimum", 120);
+
+        hueTextView.setText(Integer.toString(refObjHue));
+        refObjColThresholdTextView.setText(Integer.toString(refObjColThreshold));
+        saturationTextView.setText(Integer.toString(refObjSatMinimum));
+        valueTextView.setText("0");
+
+        hueControl.setProgress(refObjHue);
+        refObjColThresholdControl.setProgress(refObjColThreshold);
+        saturationControl.setProgress(refObjSatMinimum);
+
         try {
-            // Note: setting values for hueControl in settings.xml resulted in type error
             hueControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
                 @Override
@@ -195,12 +220,6 @@ public class SettingsActivity extends AppCompatActivity{
         TextView measObjMaxAreaAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_area);
         TextView measObjMinAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_min_area);
 
-        // Saturation and valueTextView need to be visible to OnSeekBarChangeListener
-        hueTextView = (TextView) findViewById(R.id.hue_value);
-        refObjColThresholdTextView = (TextView) findViewById(R.id.ref_obj_col_threshold_value);
-        saturationTextView = (TextView) findViewById(R.id.saturation_value);
-        valueTextView = (TextView) findViewById(R.id.value_value);
-
         // Get values from MainActivity through Intent
         frameSkip = getIntent().getStringExtra("currentFrameSkip");
         numberOfDilations = getIntent().getStringExtra("currentNumberOfDilations");
@@ -211,8 +230,6 @@ public class SettingsActivity extends AppCompatActivity{
         measObjMaxArea = getIntent().getStringExtra("currentMeasObjMaxArea");
         measObjMinArea = getIntent().getStringExtra("currentMeasObjMinArea");
 
-        refObjHue = getIntent().getIntExtra("refObjHue", 56);
-        refObjColThreshold = getIntent().getIntExtra("refObjColThreshold", 12);
 
         // Set values to TextViews
         frameSkipTextView.setText(frameSkip);
@@ -223,10 +240,5 @@ public class SettingsActivity extends AppCompatActivity{
         measObjMaxBoundTextView.setText(measObjMaxBound);
         measObjMaxAreaAreaTextView.setText(measObjMaxArea);
         measObjMinAreaTextView.setText(measObjMinArea);
-
-        hueTextView.setText(refObjHue);
-        refObjColThresholdTextView.setText(refObjColThreshold );
-        saturationTextView.setText("0");
-        valueTextView.setText("0");
     }
 }

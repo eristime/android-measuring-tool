@@ -27,6 +27,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,19 +41,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final String TAG = "Sample::SOP::Activity";
     private CameraBridgeViewBase mOpenCvCameraView;
 
+    private static boolean detecting = true;
+    private static boolean saving = false;
+
     // MainActivity parameters
     private static int frameskip = 30;
     private static int frame_i = 0;
     private static int numberOfDilations = 1;
     private static double cmToPxRatio = 1.0;
-    private static boolean detecting = true;
-    private static boolean saving = false;
 
     // RefObjDetector parameters
     private static int refObjHue = 56;
     private static int refObjColThreshold = 12;
     private static int refObjValue = 0;
-    private static int refObjSatMinimum = 0;
+    private static int refObjSatMinimum = 120;
     private static double refObjMinContourArea = 500;
     private static double refObjSideRatioLimit = 1.45;
 
@@ -79,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     int uiTextThickness = 3;
 
     RefObjDetector cubeDetector;
+    MeasObjDetector measDetector;
+    Measurements measurements;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -124,7 +128,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         myToolbar.setTitle("");
         setSupportActionBar(myToolbar);
 
-
         // Initialize OpenCV camera
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_main_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -135,6 +138,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.enableFpsMeter();
 
         cubeDetector = new RefObjDetector(56.0, 12.0, 120.0);
+        measDetector = new MeasObjDetector();
+        measurements = new Measurements();
+
     }
 
     @Override
@@ -177,10 +183,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 intent.putExtra("currentMeasObjMaxBound", Integer.toString(measObjMaxBound));
                 intent.putExtra("currentMeasObjMaxArea", Integer.toString(measObjMaxArea));
                 intent.putExtra("currentMeasObjMinArea", Integer.toString(measObjMinArea));
-                //intent.putExtra("minHue", minHue);
-                //intent.putExtra("maxHue", maxHue);
                 intent.putExtra("refObjHue", refObjHue);
                 intent.putExtra("refObjColThreshold", refObjColThreshold);
+                intent.putExtra("refObjSatMinimum", refObjSatMinimum);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -195,7 +200,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         return true;
     }
 
-    // Method runs when Apply button is pressed in SettingsActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         /* If data coming from SettingsActivity exists, the method sets variable values accordingly.
           If a value doesn't exist, the previous value for the variable is selected. */
@@ -216,20 +220,31 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 refObjSideRatioLimit = data.getDoubleExtra("refObjSideRatioLimit", refObjSideRatioLimit);
                 cubeDetector.setSideRatioLimit(refObjSideRatioLimit);
 
-
                 measObjBound = data.getIntExtra("measObjBound", measObjBound);
+                measDetector.setBound(measObjBound);
+
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                // Need for setBoundMax
+
                 measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measDetector.setMax_area(measObjMaxArea);
+
                 measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
+                measDetector.setMin(measObjMinArea);
 
                 // Seekbar input
                 refObjHue = data.getIntExtra("refObjHue", refObjHue);
-                cubeDetector.setHueMinimum(refObjHue);
+                cubeDetector.setRefHue((double)refObjHue);
+
+                refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
+                cubeDetector.setColThreshold((double)refObjColThreshold);
+
+                refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
+                cubeDetector.setSatMinimum((double)refObjSatMinimum);
 
             }
         }
     }
-
 
     public void onCameraViewStarted(int width, int height) {}
 
@@ -288,6 +303,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             bmap.compress(Bitmap.CompressFormat.JPEG, 100, fout);
             fout.flush();
             fout.close();
+
+            Toast.makeText(getApplicationContext(), "The image was saved as " + fname + ".jpg to " + savePath, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.d(TAG, e.getMessage());
             e.printStackTrace();

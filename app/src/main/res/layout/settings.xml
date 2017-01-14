@@ -27,7 +27,7 @@
         android:id="@+id/text_dilations"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:text="The amount of dilations" />
+        android:text="The number of dilations" />
     <EditText
         android:id="@+id/edit_text_dilations"
         android:layout_width="match_parent"
@@ -39,7 +39,7 @@
         android:id="@+id/text_min_contour_area"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:text="Minimum contour area"/>
+        android:text="Minimum contour area for reference cube"/>
     <EditText
         android:id="@+id/edit_text_min_contour_area"
         android:layout_width="match_parent"
@@ -75,7 +75,7 @@
         android:id="@+id/text_meas_obj_max_bound"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:text="Max-bound"/>
+        android:text="Max bound for measured object"/>
     <EditText
         android:id="@+id/edit_text_meas_obj_max_bound"
         android:layout_width="match_parent"
@@ -87,7 +87,7 @@
         android:id="@+id/text_meas_obj_max_area"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:text="measObjMaxArea"/>
+        android:text="Max area of measured object"/>
     <EditText
         android:id="@+id/edit_text_meas_obj_max_area"
         android:layout_width="match_parent"
@@ -99,7 +99,7 @@
         android:id="@+id/text_meas_obj_min_area"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:text="measObjMinArea"/>
+        android:text="Min area of measured object"/>
     <EditText
         android:id="@+id/edit_text_meas_obj_min_area"
         android:layout_width="match_parent"
@@ -115,7 +115,7 @@
             android:id="@+id/hue_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Hue"
+            android:text="Hue for reference object"
             android:layout_weight="0.7"/>
         <TextView
             android:id="@+id/hue_value"
@@ -138,7 +138,7 @@
             android:id="@+id/ref_obj_col_threshold_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="RefObj color threshold"
+            android:text="Color threshold for Reference object"
             android:layout_weight="0.7"/>
         <TextView
             android:id="@+id/ref_obj_col_threshold_value"
@@ -161,7 +161,7 @@
             android:id="@+id/saturation_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Saturation"
+            android:text="Minimum saturation for reference object"
             android:layout_weight="0.7"/>
         <TextView
             android:id="@+id/saturation_value"
@@ -184,7 +184,7 @@
             android:id="@+id/value_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Value"
+            android:text="Value for reference object. Not in use yet."
             android:layout_weight="0.7"/>
         <TextView
             android:id="@+id/value_value"

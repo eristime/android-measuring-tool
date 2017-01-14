@@ -69,6 +69,15 @@ public class RefObjDetector {
         this.sideRatioLimit = limit;
     }
 
+    public void setRefHue(double hue){ this.refHue = hue; }
+
+    public void setColThreshold(double t){ this.colThreshold = t; }
+
+    public void setSatMinimum(double s){ this.satMinimum = s; }
+
+
+
+
 
     /* CONSTRUCTOR */
     public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {
