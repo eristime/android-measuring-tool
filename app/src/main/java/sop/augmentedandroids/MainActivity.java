@@ -9,6 +9,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
@@ -27,13 +28,16 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener, View.OnTouchListener {
 
@@ -43,28 +47,56 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static boolean detecting = true;
     private static boolean saving = false;
 
-    private static double cmToPxRatio = 1.0;
-
+	// MainActivity parameters
     private static int frameskip = 30;
     private static int frame_i = 0;
-    private static int number_of_dilations = 1;
+    private static int numberOfDilations = 1;
+    private static double cmToPxRatio = 1.0;
+    private static double measSide1 = 0.0;
+    private static double measSide2 = 0.0;
+    private static double measRectShortSide = 0.0;
+    private static double measRectLongSide = 0.0;
+    private static double refRectShortSide = 0.0;
+    private static double refRectLongSide = 0.0;
+
+    // RefObjDetector parameters
+    private static int refObjHue = 56;
+    private static int refObjColThreshold = 12;
+    private static int refObjValue = 0;
+    private static int refObjSatMinimum = 120;
+    private static double refObjMinContourArea = 500;
+    private static double refObjSideRatioLimit = 1.45;
+
+    // MeasObjDetector variables
+    private static int measObjBound = 100;
+    private static int measObjMaxBound = 255;
+    private static int measObjMaxArea = 1000;
+    private static int measObjMinArea = 10;
+
 
     Camera c = Camera.open();
 
     static RotatedRect rotRect = new RotatedRect();
+    static RotatedRect measRect = new RotatedRect();
+    static List<MatOfPoint> measDrawRect = new ArrayList<>();
+    static List<RotatedRect> measRects;
+    static List<List<MatOfPoint>> measDrawRects;
 
-
-    NumberFormat nF = new DecimalFormat("#0.00");
-    NumberFormat nF2 = new DecimalFormat("#0.0000");
+    NumberFormat nF1 = new DecimalFormat("#0.0");
+    NumberFormat nF2 = new DecimalFormat("#0.00");
+    NumberFormat nF4 = new DecimalFormat("#0.0000");
 
     Scalar textCol = new Scalar(10, 255, 10);
     Scalar graphCol = new Scalar(255, 0, 255);
+    Scalar measCol = new Scalar(0, 127, 255);
 
     int uiFont = Core.FONT_HERSHEY_PLAIN;
     int uiTextScale = 2;
     int uiTextThickness = 3;
 
     RefObjDetector cubeDetector;
+    MeasObjDetector measDetector;
+    Measurements measurements;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -110,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         myToolbar.setTitle("");
         setSupportActionBar(myToolbar);
 
-
         // Initialize OpenCV camera
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_main_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -120,7 +151,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setMaxFrameSize(1280, 720);
         mOpenCvCameraView.enableFpsMeter();
 
+        measRects = new ArrayList<>();
+        measDrawRects = new ArrayList<>();
+
         cubeDetector = new RefObjDetector(56.0, 12.0, 120.0);
+        measDetector = new MeasObjDetector();
+        measurements = new Measurements();
+
     }
 
     @Override
@@ -152,11 +189,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
-                // Create a new intent and pass frameskip and number_of_dilations for settingsActivity when Settings button is clicked
+                // Create a new intent and pass parameters for settingsActivity when Settings button is clicked
                 Log.d("onOptionsItemSelected", "Action_settings selected.");
                 Intent intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra("currentFrameSkip", Integer.toString(frameskip));
-                intent.putExtra("currentNumberOfDilations", Integer.toString(number_of_dilations));
+                intent.putExtra("currentNumberOfDilations", Integer.toString(numberOfDilations));
+                intent.putExtra("currentMinContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("currentSideRatioLimit", Double.toString(refObjSideRatioLimit));
+                intent.putExtra("currentMeasObjBound", Integer.toString(measObjBound));
+                intent.putExtra("currentMeasObjMaxBound", Integer.toString(measObjMaxBound));
+                intent.putExtra("currentMeasObjMaxArea", Integer.toString(measObjMaxArea));
+                intent.putExtra("currentMeasObjMinArea", Integer.toString(measObjMinArea));
+                intent.putExtra("refObjHue", refObjHue);
+                intent.putExtra("refObjColThreshold", refObjColThreshold);
+                intent.putExtra("refObjSatMinimum", refObjSatMinimum);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -170,21 +216,52 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
         return true;
     }
-    // Activates when Apply button pressed in SettingsActivity
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        /* If data coming from SettingsActivity exists, the method sets variable values accordingly.
+          If a value doesn't exist, the previous value for the variable is selected. */
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             Log.v(TAG, "Requestcode OK.");
             if(resultCode == RESULT_OK){
-                // Set a new frameskip value if it exists, otherwise go with the previous one
+
+                // TextView input
                 frameskip = data.getIntExtra("frameskip", frameskip);
-                // Set a new number_of_dilations value if it exists, otherwise go with the previous one
-                number_of_dilations = data.getIntExtra("number_of_dilations", number_of_dilations);
-                cubeDetector.setNumberOfDilations(number_of_dilations);
+
+                numberOfDilations = data.getIntExtra("numberOfDilations", numberOfDilations);
+                cubeDetector.setNumberOfDilations(numberOfDilations);
+
+                refObjMinContourArea = data.getDoubleExtra("refObjMinContourArea", refObjMinContourArea);
+                cubeDetector.setMinContourArea(refObjMinContourArea);
+
+                refObjSideRatioLimit = data.getDoubleExtra("refObjSideRatioLimit", refObjSideRatioLimit);
+                cubeDetector.setSideRatioLimit(refObjSideRatioLimit);
+
+                measObjBound = data.getIntExtra("measObjBound", measObjBound);
+                measDetector.setBound(measObjBound);
+
+                measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                // Need for setBoundMax
+
+                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measDetector.setMax_area(measObjMaxArea);
+
+                measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
+                measDetector.setMin(measObjMinArea);
+
+                // Seekbar input
+                refObjHue = data.getIntExtra("refObjHue", refObjHue);
+                cubeDetector.setRefHue((double)refObjHue);
+
+                refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
+                cubeDetector.setColThreshold((double)refObjColThreshold);
+
+                refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
+                cubeDetector.setSatMinimum((double)refObjSatMinimum);
+
             }
         }
     }
-
 
     public void onCameraViewStarted(int width, int height) {}
 
@@ -202,10 +279,46 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 frame_i++;
             } else {
                 frame_i = 0;
+
+                /**
+                 * Detecting reference object through RefObjDetector class
+                 */
                 cubeDetector.ProcessFrame(inputFrame);
                 rotRect = cubeDetector.getRotRect();
 
+                refRectShortSide = cubeDetector.getShortSideLength();
+                refRectLongSide = cubeDetector.getLongSideLength();
+
                 cmToPxRatio = (5.0 / cubeDetector.getShortSideLength());
+
+                /**
+                 * Detecting possible measured objects through MeasObjDetector class
+                 */
+                measRects = new ArrayList<>();
+                measDrawRects = new ArrayList<>();
+                measDetector.detectMeasurable(inputFrame);
+
+                double largestMeasArea = 0.0;
+                int largestMeasIndex = -1;
+
+                for(int i=0; i<measDetector.getContours().size(); i++) {
+                    measDetector.ptsDistance(i);
+                    measRects.add(measDetector.get_minAreaRect());
+                    measDrawRects.add(measDetector.getDrawContour());
+                    double a = Imgproc.contourArea(measDetector.getContours().get(i));
+                    if(a > largestMeasArea) {
+                        largestMeasArea = a;
+                        largestMeasIndex = i;
+                        measRectShortSide = measDetector.getMinLen();
+                        measRectLongSide = measDetector.getMaxLen();
+                    }
+                }
+
+                if(largestMeasIndex > -1) {
+                    measDrawRect = measDrawRects.get(largestMeasIndex);
+                    measSide1 = measRectShortSide * cmToPxRatio;
+                    measSide2 = measRectLongSide * cmToPxRatio;
+                }
 
                 //CornerTest(inputFrame);
             }
@@ -227,7 +340,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             bmap = Bitmap.createBitmap(mImage.cols(), mImage.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(mImage, bmap);
 
-            String savePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures";
+            //String savePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures";
+            String savePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
             File dir = new File(savePath);
             if(!dir.isDirectory()) {
                 dir.mkdir();
@@ -243,6 +357,19 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             bmap.compress(Bitmap.CompressFormat.JPEG, 100, fout);
             fout.flush();
             fout.close();
+
+            Log.d(TAG, savePath);
+            Log.d(TAG, savePath);
+            Log.d(TAG, savePath);
+            Log.d(TAG, savePath);
+            Log.d(TAG, savePath);
+            Log.d(TAG, fname);
+            Log.d(TAG, fname);
+            Log.d(TAG, fname);
+            Log.d(TAG, fname);
+            Log.d(TAG, fname);
+
+            //Toast.makeText(getApplicationContext(), "The image was saved as " + fname + ".jpg to " + savePath, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.d(TAG, e.getMessage());
             e.printStackTrace();
@@ -253,10 +380,17 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         // Draw the rotated rectangle on-screen in magenta color
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
+        Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
+
+
         // Write rect side ratio on-screen
-        Core.putText(inputFrame, "rectangle side ratio: " + nF.format(cubeDetector.getRectSideRatio()), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "area: " + nF.format(cubeDetector.getRectArea()), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "cm/px ratio: " + nF2.format(cmToPxRatio), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
+
+        Core.putText(inputFrame, "MEASURING SIDES..", new Point(10.0, 600), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "1: " + nF1.format(measSide1) + " cm", new Point(10.0, 640), uiFont, uiTextScale, textCol, uiTextThickness);
+        Core.putText(inputFrame, "2: " + nF1.format(measSide2) + " cm", new Point(10.0, 680), uiFont, uiTextScale, textCol, uiTextThickness);
 
         // Draw a circle marker and write color info of rotated rectangle center point
         DrawRotRectCenterData(inputFrame);

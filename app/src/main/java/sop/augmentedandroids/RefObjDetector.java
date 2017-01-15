@@ -23,9 +23,11 @@ public class RefObjDetector {
     private double rectSideRatio;
     private double sideRatioLimit;
     private double shortSideLength;
+    private double longSideLength;
     private List<MatOfPoint> rotRectCnt;
     private double rectArea;
     private double minContourArea;
+    private double maxContourArea;
     private double[] rectCenterCols;
     private double refHue;
     private double colThreshold;
@@ -51,6 +53,8 @@ public class RefObjDetector {
 
     public double getShortSideLength() { return shortSideLength; }
 
+    public double getLongSideLength() { return longSideLength; }
+
     public RotatedRect getRotRect() {
         return rotRect;
     }
@@ -61,12 +65,31 @@ public class RefObjDetector {
         this.numberOfDilations = n;
     }
 
+    public void setMinContourArea(double area){
+        this.minContourArea = area;
+    }
+
+    public void setSideRatioLimit(double limit){
+        this.sideRatioLimit = limit;
+    }
+
+    public void setRefHue(double hue){ this.refHue = hue; }
+
+    public void setColThreshold(double t){ this.colThreshold = t; }
+
+    public void setSatMinimum(double s){ this.satMinimum = s; }
+
+
+
+
+
     /* CONSTRUCTOR */
     public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {
 
         rotRect = null;
         rotRectCnt = new ArrayList<>();
         minContourArea = 500;
+        maxContourArea = 800000;
         numberOfDilations = 1;
         sideRatioLimit = 1.45;
         this.refHue = referenceHue;
@@ -154,8 +177,10 @@ public class RefObjDetector {
     /* THE MAIN PROCESSING FUNCTION FOR IMAGE FRAME */
     public synchronized void ProcessFrame(Mat frame_in) {
 
-        Mat frame = frame_in.clone();
-        Mat frameHSV = frame_in.clone();
+        //Mat frame = frame_in.clone();
+        //Mat frameHSV = frame_in.clone();
+        Mat frame = new Mat();
+        Mat frameHSV = new Mat();
 
         boolean rectUpdated = false;
 
@@ -207,7 +232,7 @@ public class RefObjDetector {
                 Point[] ps = new Point[4];
                 r.points(ps);
 
-                double sideRatio, shortSide;
+                double sideRatio, shortSide, longSide;
 
                 double L1 = GetDist(ps[0], ps[1]);
                 double L2 = GetDist(ps[1], ps[2]);
@@ -215,18 +240,21 @@ public class RefObjDetector {
                 if(L1 > L2) {
                     sideRatio = L1/L2;
                     shortSide = L2;
+                    longSide = L1;
                 } else {
                     sideRatio = L2/L1;
                     shortSide = L1;
+                    longSide = L2;
                 }
 
-                if (sideRatio <= sideRatioLimit && area > biggestContourArea && area < 800000 && sat >= satMinimum && area > minContourArea) {
+                if (sideRatio <= sideRatioLimit && area > biggestContourArea && area < maxContourArea && sat >= satMinimum && area > minContourArea) {
                     biggestContourArea = area;
                     rectCenterCols = contourCols;
                     rectArea = area;
                     rectSideRatio = sideRatio;
                     rotRect = r;
                     shortSideLength = shortSide;
+                    longSideLength = longSide;
                     rectUpdated = true;
                 }
             }
