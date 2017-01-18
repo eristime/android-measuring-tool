@@ -15,16 +15,16 @@ public class SettingsActivity extends AppCompatActivity{
     private static final String TAG = "SOP::SettingsActivity";
 
     // User inputs are strings because the input is given through EditText
-    private String frameSkip = "5";
-    private String numberOfDilations = "1";
+    private String frameSkip;
+    private String numberOfDilations;
 
     // RefObjDetector parameters
     private int refObjHue;
     private int refObjColThreshold;
     private int refObjSatMinimum;
     private int value;
-    private String refObjMinContourArea = "500";
-    private String refObjSideRatioLimit = "1.45";
+    private String refObjMinContourArea;
+    private String refObjSideRatioLimit;
 
     // MeasObjDetector variables
     private String measObjBound;
@@ -33,6 +33,7 @@ public class SettingsActivity extends AppCompatActivity{
     private String measObjMinArea;
 
     // TextViews
+
     private TextView hueTextView;
     private TextView refObjColThresholdTextView;
     private TextView saturationTextView;
@@ -60,6 +61,7 @@ public class SettingsActivity extends AppCompatActivity{
 
         EditText dilationsEditText = (EditText) findViewById(R.id.edit_text_dilations);
         numberOfDilations = dilationsEditText.getText().toString();
+        Log.d(TAG, "Dilations: " + numberOfDilations);
 
         EditText minContourAreaEditText = (EditText) findViewById(R.id.edit_text_min_contour_area);
         refObjMinContourArea = minContourAreaEditText.getText().toString();
@@ -81,12 +83,12 @@ public class SettingsActivity extends AppCompatActivity{
 
         if (!frameSkip.isEmpty()) {
             if (Integer.parseInt(frameSkip) >= 0) {
-                intent.putExtra("frameskip", Integer.parseInt(frameSkip));
+                intent.putExtra("frameSkip", Integer.parseInt(frameSkip));
             }
         }
         if (!numberOfDilations.isEmpty()){
             if (Integer.parseInt(numberOfDilations) >= 0) {
-                intent.putExtra("number_of_dilations", Integer.parseInt(numberOfDilations));
+                intent.putExtra("numberOfDilations", Integer.parseInt(numberOfDilations));
             }
         }
         if (!refObjMinContourArea.isEmpty()) {
@@ -100,7 +102,7 @@ public class SettingsActivity extends AppCompatActivity{
             }
         }
         if (!measObjBound.isEmpty()) {
-            if (Integer.parseInt( measObjBound) >= 0) {
+            if (Integer.parseInt(measObjBound) >= 0) {
                 intent.putExtra("measObjBound", Integer.parseInt( measObjBound));
             }
         }
@@ -212,7 +214,7 @@ public class SettingsActivity extends AppCompatActivity{
 
         // initialize TextViews
         TextView frameSkipTextView = (EditText) findViewById(R.id.edit_text_frameskip);
-        TextView dilationsTextView = (EditText) findViewById(R.id.edit_text_dilations);
+        TextView dilationsEditText = (EditText) findViewById(R.id.edit_text_dilations);
         TextView minContourAreaTextView = (EditText) findViewById(R.id.edit_text_min_contour_area);
         TextView sideRatioLimitTextView = (EditText) findViewById(R.id.edit_text_side_ratio_limit);
         TextView measObjBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_bound);
@@ -221,19 +223,19 @@ public class SettingsActivity extends AppCompatActivity{
         TextView measObjMinAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_min_area);
 
         // Get values from MainActivity through Intent
-        frameSkip = getIntent().getStringExtra("currentFrameSkip");
-        numberOfDilations = getIntent().getStringExtra("currentNumberOfDilations");
-        refObjMinContourArea = getIntent().getStringExtra("currentMinContourArea");
-        refObjSideRatioLimit = getIntent().getStringExtra("currentSideRatioLimit");
-        measObjBound = getIntent().getStringExtra("currentMeasObjBound");
-        measObjMaxBound = getIntent().getStringExtra("currentMeasObjMaxBound");
-        measObjMaxArea = getIntent().getStringExtra("currentMeasObjMaxArea");
-        measObjMinArea = getIntent().getStringExtra("currentMeasObjMinArea");
+        frameSkip = getIntent().getStringExtra("frameSkip");
+        numberOfDilations = getIntent().getStringExtra("numberOfDilations");
+        refObjMinContourArea = getIntent().getStringExtra("minContourArea");
+        refObjSideRatioLimit = getIntent().getStringExtra("sideRatioLimit");
+        measObjBound = getIntent().getStringExtra("measObjBound");
+        measObjMaxBound = getIntent().getStringExtra("measObjMaxBound");
+        measObjMaxArea = getIntent().getStringExtra("measObjMaxArea");
+        measObjMinArea = getIntent().getStringExtra("measObjMinArea");
 
 
         // Set values to TextViews
         frameSkipTextView.setText(frameSkip);
-        dilationsTextView.setText(numberOfDilations);
+        dilationsEditText.setText(numberOfDilations);
         minContourAreaTextView.setText(refObjMinContourArea);
         sideRatioLimitTextView.setText(refObjSideRatioLimit);
         measObjBoundTextView.setText(measObjBound);
