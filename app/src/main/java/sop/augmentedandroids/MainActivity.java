@@ -47,6 +47,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static boolean detecting = true;
     private static boolean saving = false;
 
+    // Intent check-values
+    static final int GET_INPUT_DATA = 1;
+
 	// MainActivity parameters
     private static int frameskip = 30;
     private static int frame_i = 0;
@@ -192,14 +195,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 // Create a new intent and pass parameters for settingsActivity when Settings button is clicked
                 Log.d("onOptionsItemSelected", "Action_settings selected.");
                 Intent intent = new Intent(this, SettingsActivity.class);
-                intent.putExtra("currentFrameSkip", Integer.toString(frameskip));
-                intent.putExtra("currentNumberOfDilations", Integer.toString(numberOfDilations));
-                intent.putExtra("currentMinContourArea", Double.toString(refObjMinContourArea));
-                intent.putExtra("currentSideRatioLimit", Double.toString(refObjSideRatioLimit));
-                intent.putExtra("currentMeasObjBound", Integer.toString(measObjBound));
-                intent.putExtra("currentMeasObjMaxBound", Integer.toString(measObjMaxBound));
-                intent.putExtra("currentMeasObjMaxArea", Integer.toString(measObjMaxArea));
-                intent.putExtra("currentMeasObjMinArea", Integer.toString(measObjMinArea));
+                intent.putExtra("frameSkip", Integer.toString(frameskip));
+                intent.putExtra("numberOfDilations", Integer.toString(numberOfDilations));
+                intent.putExtra("minContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("sideRatioLimit", Double.toString(refObjSideRatioLimit));
+                intent.putExtra("measObjBound", Integer.toString(measObjBound));
+                intent.putExtra("measObjMaxBound", Integer.toString(measObjMaxBound));
+                intent.putExtra("measObjMaxArea", Integer.toString(measObjMaxArea));
+                intent.putExtra("measObjMinArea", Integer.toString(measObjMinArea));
                 intent.putExtra("refObjHue", refObjHue);
                 intent.putExtra("refObjColThreshold", refObjColThreshold);
                 intent.putExtra("refObjSatMinimum", refObjSatMinimum);
@@ -221,12 +224,12 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         /* If data coming from SettingsActivity exists, the method sets variable values accordingly.
           If a value doesn't exist, the previous value for the variable is selected. */
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1) {
+        if (requestCode == GET_INPUT_DATA) {
             Log.v(TAG, "Requestcode OK.");
             if(resultCode == RESULT_OK){
 
                 // TextView input
-                frameskip = data.getIntExtra("frameskip", frameskip);
+                frameskip = data.getIntExtra("frameSkip", frameskip);
 
                 numberOfDilations = data.getIntExtra("numberOfDilations", numberOfDilations);
                 cubeDetector.setNumberOfDilations(numberOfDilations);
