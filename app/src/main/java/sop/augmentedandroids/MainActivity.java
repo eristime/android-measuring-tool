@@ -317,13 +317,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     }
                 }
 
+                /**
+                 * Convert measured object dimension from pixels to centimeters
+                 */
                 if(largestMeasIndex > -1) {
                     measDrawRect = measDrawRects.get(largestMeasIndex);
                     measSide1 = measRectShortSide * cmToPxRatio;
                     measSide2 = measRectLongSide * cmToPxRatio;
                 }
-
-                //CornerTest(inputFrame);
             }
 
             inputFrame = OnScreenDrawings(inputFrame);
@@ -362,14 +363,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             fout.close();
 
             Log.d(TAG, savePath);
-            Log.d(TAG, savePath);
-            Log.d(TAG, savePath);
-            Log.d(TAG, savePath);
-            Log.d(TAG, savePath);
-            Log.d(TAG, fname);
-            Log.d(TAG, fname);
-            Log.d(TAG, fname);
-            Log.d(TAG, fname);
             Log.d(TAG, fname);
 
             //Toast.makeText(getApplicationContext(), "The image was saved as " + fname + ".jpg to " + savePath, Toast.LENGTH_SHORT).show();
@@ -403,32 +396,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         return inputFrame;
-    }
-
-    private void CornerTest(Mat inputFrame) {
-
-        Mat dst = new Mat(inputFrame.size(), CvType.CV_32FC1);
-        Mat dst_norm = new Mat();
-        Mat dst_norm_scaled = new Mat();
-
-        Mat klooni = inputFrame.clone();
-        Imgproc.cvtColor(klooni, klooni, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.cornerHarris(klooni, dst, 2, 3, 0.04, Imgproc.BORDER_DEFAULT);
-        //Imgproc.dilate(corners, corners, new Mat(), new Point(-1,-1), 2);
-
-        Core.normalize(dst, dst_norm, 0, 255, Core.NORM_MINMAX, CvType.CV_32FC1, new Mat());
-
-        Core.convertScaleAbs(dst_norm, dst_norm_scaled);
-
-        for(int j=0; j<dst_norm.rows(); j++)
-        {
-            for(int i=0; i<dst_norm.cols(); i++)
-            {
-                if((int)dst_norm.get(j,i)[0] > 200) {
-                    Core.circle(inputFrame, new Point(i,j), 3, new Scalar(255,255,0), 1);
-                }
-            }
-        }
     }
 
     private void DrawRotRectCenterData(Mat frame_in) {
