@@ -101,7 +101,7 @@ public class SettingsActivity extends AppCompatActivity{
         }
         if (!measObjBound.isEmpty()) {
             if (Integer.parseInt( measObjBound) >= 0) {
-                intent.putExtra("measObjBound", Integer.parseInt( measObjBound));
+                intent.putExtra("measObjBound", Integer.parseInt(measObjBound));
             }
         }
         if (!measObjMaxBound.isEmpty()){
@@ -123,7 +123,7 @@ public class SettingsActivity extends AppCompatActivity{
             intent.putExtra("refObjHue", refObjHue);
         }
         if (refObjColThreshold >= 0 && refObjColThreshold < 89) {
-            intent.putExtra("refObjColThreshold", refObjHue);
+            intent.putExtra("refObjColThreshold", refObjColThreshold);
         }
         if (refObjSatMinimum >= 0 && refObjSatMinimum < 255) {
             intent.putExtra("refObjSatMinimum", refObjSatMinimum);
