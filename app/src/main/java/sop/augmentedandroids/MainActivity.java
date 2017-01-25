@@ -393,6 +393,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         if(rotRect != null) {
             Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), uiFont, 2, textCol, 1);
+            Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
         }
 
         return inputFrame;
