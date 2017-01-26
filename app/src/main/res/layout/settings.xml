@@ -36,12 +36,24 @@
 
     <!-- Min contour area for RefObjDetector input -->
     <TextView
-        android:id="@+id/text_min_contour_area"
+        android:id="@+id/text_ref_obj_min_area"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:text="Minimum contour area for reference cube"/>
     <EditText
-        android:id="@+id/edit_text_min_contour_area"
+        android:id="@+id/edit_text_ref_obj_min_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
+
+    <!-- Max contour area for RefObjDetector input -->
+    <TextView
+        android:id="@+id/text_ref_obj_max_area"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:text="Maximum contour area for reference cube"/>
+    <EditText
+        android:id="@+id/edit_text_ref_obj_max_area"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal" />

@@ -207,7 +207,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 Intent intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra("frameSkip", Integer.toString(frameskip));
                 intent.putExtra("numberOfDilations", Integer.toString(numberOfDilations));
-                intent.putExtra("minContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("refObjMinContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("refObjMaxContourArea", Double.toString(refObjMaxContourArea));
                 intent.putExtra("sideRatioLimit", Double.toString(refObjSideRatioLimit));
                 intent.putExtra("measObjBound", Integer.toString(measObjBound));
                 intent.putExtra("measObjMaxBound", Integer.toString(measObjMaxBound));
@@ -247,6 +248,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 refObjMinContourArea = data.getDoubleExtra("refObjMinContourArea", refObjMinContourArea);
                 cubeDetector.setMinContourArea(refObjMinContourArea);
 
+                refObjMaxContourArea = data.getDoubleExtra("refObjMaxContourArea", refObjMaxContourArea);
+                cubeDetector.setMaxContourArea(refObjMaxContourArea);
+
                 refObjSideRatioLimit = data.getDoubleExtra("refObjSideRatioLimit", refObjSideRatioLimit);
                 cubeDetector.setSideRatioLimit(refObjSideRatioLimit);
 
@@ -254,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 measDetector.setBound(measObjBound);
 
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
-                // Need for setBoundMax
+                // Need for setBoundMax??
 
                 measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
                 measDetector.setMax_area(measObjMaxArea);

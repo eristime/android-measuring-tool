@@ -69,6 +69,8 @@ public class RefObjDetector {
         this.minContourArea = area;
     }
 
+    public void setMaxContourArea(double area) { this.maxContourArea = area; }
+
     public void setSideRatioLimit(double limit){
         this.sideRatioLimit = limit;
     }
