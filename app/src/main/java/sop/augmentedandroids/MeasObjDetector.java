@@ -38,10 +38,10 @@ public class MeasObjDetector {
     List<MatOfPoint> drawContour;
     private static final String TAG = "SOP::MeasObj";
 
-    private int bound = 100;
-    private static int max_bound = 255;
-    private int max_area = 100000;
-    private int min_area = 10000;
+    private int bound;
+    private static int max_bound;
+    private int min_area;
+    private int max_area;
 
     private double dist0 = 0.0;
     private double dist1 = 0.0;
@@ -54,7 +54,11 @@ public class MeasObjDetector {
     * \param    None
     * \returns  None
     */
-    public MeasObjDetector() {
+    public MeasObjDetector(int bound, int boundMaximum, int contourAreaMinimum, int contourAreaMaximum) {
+        this.bound = bound;
+        this.max_bound = boundMaximum;
+        this.min_area = contourAreaMinimum;
+        this.max_area = contourAreaMaximum;
         contours = new ArrayList<>();
         _minAreaRect = new RotatedRect();
     }
