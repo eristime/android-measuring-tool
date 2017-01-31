@@ -9,10 +9,15 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.KeyPoint;
 import org.opencv.imgproc.Imgproc;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -45,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private static boolean detecting = true;
+    private static boolean selecting_custom_ref = false;
     private static boolean saving = false;
 
     // Intent check-values
@@ -85,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     static List<RotatedRect> measRects;
     static List<List<MatOfPoint>> measDrawRects;
 
+    static List<KeyPoint> orb_keypoints = new ArrayList<>();
+
     NumberFormat nF1 = new DecimalFormat("#0.0");
     NumberFormat nF2 = new DecimalFormat("#0.00");
     NumberFormat nF4 = new DecimalFormat("#0.0000");
@@ -100,6 +108,11 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     RefObjDetector cubeDetector;
     MeasObjDetector measDetector;
     Measurements measurements;
+
+    MeasObjDetector customDetector;
+
+    MatOfKeyPoint keyps;
+    Mat processing_pic;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -161,6 +174,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         measDetector = new MeasObjDetector();
         measurements = new Measurements();
 
+        customDetector = new MeasObjDetector();
+
     }
 
     @Override
@@ -211,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
             case R.id.action_detection_toggle:
                 detecting = !detecting;
+                selecting_custom_ref = !selecting_custom_ref;
                 return  true;
 
             case R.id.action_save_image:
@@ -276,8 +292,71 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public Mat onCameraFrame(Mat inputFrame) {
 
-        if(detecting) {
-            // Skip calculating contour for as many frames as indicated by 'frameskip' variable
+        if(selecting_custom_ref) {
+
+            if (processing_pic == null || keyps == null) {
+                processing_pic = new Mat();
+                keyps = new MatOfKeyPoint();
+            }
+
+            Imgproc.cvtColor(inputFrame, processing_pic, Imgproc.COLOR_BGRA2RGB);
+
+            // Skip processing for as many frames as indicated by 'frameskip' variable
+            if (frame_i < frameskip) {
+                frame_i++;
+            } else {
+                frame_i = 0;
+
+
+                /**
+                 * ORB detection testing
+                 */
+
+
+
+
+
+
+                FeatureDetector orb = FeatureDetector.create(FeatureDetector.ORB);
+                orb.detect(processing_pic, keyps);
+
+                orb_keypoints = keyps.toList();
+
+                customDetector.detectMeasurable(inputFrame);
+
+                int largest_contour_i = 0;
+                double largestArea = 0.0;
+                for (int i = 0; i < customDetector.getContours().size(); i++) {
+                    customDetector.ptsDistance(i);
+                    double a = Imgproc.contourArea(customDetector.getContours().get(i));
+                    if (a > largestArea) {
+                        largestArea = a;
+                        largest_contour_i = i;
+                    }
+                }
+
+                if(customDetector.getContours().size() == 0) {
+                    return inputFrame;
+                }
+
+                FilterKeypoints(customDetector.getContours().get(largest_contour_i));
+
+
+                keyps.fromList(orb_keypoints);
+
+
+
+            }
+
+            if (processing_pic != null && keyps != null) {
+                Features2d.drawKeypoints(processing_pic, keyps, processing_pic);
+                Imgproc.cvtColor(processing_pic, inputFrame, Imgproc.COLOR_RGB2BGRA);
+            }
+
+
+        } else if(detecting) {
+
+            // Skip processing for as many frames as indicated by 'frameskip' variable
             if (frame_i < frameskip) {
                 frame_i++;
             } else {
@@ -294,39 +373,42 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 cmToPxRatio = (5.0 / cubeDetector.getShortSideLength());
 
-                /**
-                 * Detecting possible measured objects through MeasObjDetector class
-                 */
-                measRects = new ArrayList<>();
-                measDrawRects = new ArrayList<>();
-                measDetector.detectMeasurable(inputFrame);
 
-                double largestMeasArea = 0.0;
-                int largestMeasIndex = -1;
+                if(rotRect != null) {
 
-                for(int i=0; i<measDetector.getContours().size(); i++) {
-                    measDetector.ptsDistance(i);
-                    measRects.add(measDetector.get_minAreaRect());
-                    measDrawRects.add(measDetector.getDrawContour());
-                    double a = Imgproc.contourArea(measDetector.getContours().get(i));
-                    if(a > largestMeasArea) {
-                        largestMeasArea = a;
-                        largestMeasIndex = i;
-                        measRectShortSide = measDetector.getMinLen();
-                        measRectLongSide = measDetector.getMaxLen();
+                    /**
+                     * Detecting possible measured objects through MeasObjDetector class
+                     */
+                    measRects = new ArrayList<>();
+                    measDrawRects = new ArrayList<>();
+                    measDetector.detectMeasurable(inputFrame);
+
+                    double largestMeasArea = 0.0;
+                    int largestMeasIndex = -1;
+
+                    for (int i = 0; i < measDetector.getContours().size(); i++) {
+                        measDetector.ptsDistance(i);
+                        measRects.add(measDetector.get_minAreaRect());
+                        measDrawRects.add(measDetector.getDrawContour());
+                        double a = Imgproc.contourArea(measDetector.getContours().get(i));
+                        if (a > largestMeasArea && !IsRectInContour(rotRect, measDetector.getContours().get(i))) {
+                            largestMeasArea = a;
+                            largestMeasIndex = i;
+                            measRectShortSide = measDetector.getMinLen();
+                            measRectLongSide = measDetector.getMaxLen();
+                        }
+                    }
+
+                    /**
+                     * Convert measured object dimension from pixels to centimeters
+                     */
+                    if (largestMeasIndex > -1) {
+                        measDrawRect = measDrawRects.get(largestMeasIndex);
+                        measSide1 = measRectShortSide * cmToPxRatio;
+                        measSide2 = measRectLongSide * cmToPxRatio;
                     }
                 }
-
-                /**
-                 * Convert measured object dimension from pixels to centimeters
-                 */
-                if(largestMeasIndex > -1) {
-                    measDrawRect = measDrawRects.get(largestMeasIndex);
-                    measSide1 = measRectShortSide * cmToPxRatio;
-                    measSide2 = measRectLongSide * cmToPxRatio;
-                }
             }
-
             inputFrame = OnScreenDrawings(inputFrame);
         }
 
@@ -336,6 +418,38 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         return inputFrame;  // Return the final (possibly edited) image frame
+    }
+
+    boolean IsRectInContour(RotatedRect rect, MatOfPoint cnt) {
+
+        MatOfPoint2f cnt2 = new MatOfPoint2f(cnt.toArray());
+
+        for(int i=0; i<4; i++) {
+
+            if(Imgproc.pointPolygonTest(cnt2, rect.center, false) > 0) {
+                Log.d(TAG, "REF INSIDE MEAS");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void FilterKeypoints(MatOfPoint cnt) {
+
+        List<KeyPoint> filteredKeypoints = new ArrayList<>();
+
+        MatOfPoint2f cnt2 = new MatOfPoint2f(cnt.toArray());
+
+        for(int i=0; i<orb_keypoints.size(); i++) {
+
+            if(Imgproc.pointPolygonTest(cnt2, orb_keypoints.get(i).pt, false) >= 0) {
+
+                filteredKeypoints.add(orb_keypoints.get(i));
+
+            }
+        }
+
+        orb_keypoints = filteredKeypoints;
     }
 
     private void SaveImage(Mat mImage) {
