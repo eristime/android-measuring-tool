@@ -344,6 +344,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 keyps.fromList(orb_keypoints);
 
+                Log.d(TAG, String.valueOf(largest_contour_i));
+                Log.d(TAG, String.valueOf(orb_keypoints.size()));
+                Log.d(TAG, String.valueOf(keyps.size()));
+
+                measDrawRects = new ArrayList<>();
+
+                customDetector.ptsDistance(largest_contour_i);
+                measDrawRects.add(customDetector.getDrawContour());
+
+                //Imgproc.drawContours(inputFrame, , -1, measCol, 2);
 
 
             }

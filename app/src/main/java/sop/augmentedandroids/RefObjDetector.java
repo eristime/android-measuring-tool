@@ -1,10 +1,17 @@
 package sop.augmentedandroids;
 
+import android.util.Log;
+
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
@@ -180,6 +187,7 @@ public class RefObjDetector {
 
         Mat frame = new Mat();
         Mat frameHSV = new Mat();
+        Mat hueMat = new Mat();
 
         boolean rectUpdated = false;
 
@@ -189,9 +197,14 @@ public class RefObjDetector {
         Imgproc.cvtColor(frame_in, frame, Imgproc.COLOR_BGR2GRAY);
         Imgproc.cvtColor(frame_in, frameHSV, Imgproc.COLOR_BGR2HSV);
 
-        Imgproc.Canny(frame, frame, 50.0, 130.0);
-        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), numberOfDilations);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
-        //Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+
+        Core.inRange(frameHSV, new Scalar(refHue-colThreshold, 0, 0), new Scalar(refHue+colThreshold, 255, 255), hueMat);
+
+        Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+
+        Imgproc.Canny(hueMat, frame, 50.0, 130.0);
+
+        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
 
         Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
