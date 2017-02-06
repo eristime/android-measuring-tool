@@ -1,7 +1,5 @@
 package sop.augmentedandroids;
 
-import android.util.Log;
-
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -219,14 +217,14 @@ public class MeasObjDetector {
         Imgproc.findContours(gFrame, contours, mhierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // (0400)
-        List<MatOfPoint> temp = new ArrayList<>();
-        for (int i = 0; i < contours.size(); i++) {
-            if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
-                //contours.remove(i);
-                temp.add(contours.get(i));
+        int cnt_count = contours.size();
+        if(cnt_count > 0) {
+            for (int i = cnt_count; i == 0; i--) {
+                if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
+                    contours.remove(i);
+                }
             }
         }
-        contours = temp;
 
         /*
         * \note     We still need to adapt the following features before measuring: (TODO)
