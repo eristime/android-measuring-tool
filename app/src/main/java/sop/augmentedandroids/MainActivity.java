@@ -9,12 +9,15 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
 import org.opencv.features2d.KeyPoint;
@@ -50,7 +53,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private static boolean detecting = true;
-    private static boolean selecting_custom_ref = false;
+    private static boolean selecting_custom_ref = true;
+    private static boolean custom_ref = false;
     private static boolean saving = false;
 
     // Intent check-values
@@ -113,6 +117,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     MatOfKeyPoint keyps;
     Mat processing_pic;
+
+    Mat customDescriptor = new Mat();
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -226,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
             case R.id.action_detection_toggle:
                 detecting = !detecting;
-                selecting_custom_ref = !selecting_custom_ref;
+                custom_ref = !custom_ref;
                 return  true;
 
             case R.id.action_save_image:
@@ -287,80 +293,85 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onCameraViewStopped() {}
 
     public boolean onTouch(View view, MotionEvent event) {
+
+        ApplyCustomRef();
+
         return false;
+    }
+
+    void ApplyCustomRef() {
+
+        DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        descriptor.compute(processing_pic, keyps, customDescriptor);
+        selecting_custom_ref = !selecting_custom_ref;
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
 
-        if(selecting_custom_ref) {
+        if(custom_ref) {
 
-            if (processing_pic == null || keyps == null) {
-                processing_pic = new Mat();
-                keyps = new MatOfKeyPoint();
-            }
+            if(selecting_custom_ref) {
 
-            Imgproc.cvtColor(inputFrame, processing_pic, Imgproc.COLOR_BGRA2RGB);
+                if (processing_pic == null || keyps == null) {
+                    processing_pic = new Mat();
+                    keyps = new MatOfKeyPoint();
+                }
 
-            // Skip processing for as many frames as indicated by 'frameskip' variable
-            if (frame_i < frameskip) {
-                frame_i++;
-            } else {
-                frame_i = 0;
+                Imgproc.cvtColor(inputFrame, processing_pic, Imgproc.COLOR_BGRA2RGB);
 
+                // Skip processing for as many frames as indicated by 'frameskip' variable
+                if (frame_i < frameskip) {
+                    frame_i++;
+                } else {
+                    frame_i = 0;
 
-                /**
-                 * ORB detection testing
-                 */
+                    /**
+                     * ORB detection testing
+                     */
 
+                    FeatureDetector orb = FeatureDetector.create(FeatureDetector.ORB);
+                    orb.detect(processing_pic, keyps);
 
+                    orb_keypoints = keyps.toList();
 
+                    customDetector.detectMeasurable(inputFrame);
 
-
-
-                FeatureDetector orb = FeatureDetector.create(FeatureDetector.ORB);
-                orb.detect(processing_pic, keyps);
-
-                orb_keypoints = keyps.toList();
-
-                customDetector.detectMeasurable(inputFrame);
-
-                int largest_contour_i = 0;
-                double largestArea = 0.0;
-                for (int i = 0; i < customDetector.getContours().size(); i++) {
-                    customDetector.ptsDistance(i);
-                    double a = Imgproc.contourArea(customDetector.getContours().get(i));
-                    if (a > largestArea) {
-                        largestArea = a;
-                        largest_contour_i = i;
+                    int largest_contour_i = 0;
+                    double largestArea = 0.0;
+                    for (int i = 0; i < customDetector.getContours().size(); i++) {
+                        customDetector.ptsDistance(i);
+                        double a = Imgproc.contourArea(customDetector.getContours().get(i));
+                        if (a > largestArea) {
+                            largestArea = a;
+                            largest_contour_i = i;
+                        }
                     }
+
+                    if (customDetector.getContours().size() == 0) {
+                        return inputFrame;
+                    }
+
+                    FilterKeypoints(customDetector.getContours().get(largest_contour_i));
+
+                    keyps.fromList(orb_keypoints);
+
+                    customDetector.ptsDistance(largest_contour_i);
+                    measDrawRect = customDetector.getDrawContour();
                 }
 
-                if(customDetector.getContours().size() == 0) {
-                    return inputFrame;
+                if (processing_pic != null && keyps != null) {
+                    Features2d.drawKeypoints(processing_pic, keyps, processing_pic);
+                    Imgproc.cvtColor(processing_pic, inputFrame, Imgproc.COLOR_RGB2BGRA);
+                    Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
                 }
+            } else {
 
-                FilterKeypoints(customDetector.getContours().get(largest_contour_i));
+                Mat processingDescriptor = new Mat();
 
+                DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+                MatOfDMatch matches = new MatOfDMatch();
+                MatOfDMatch filteredMatches = new MatOfDMatch();
 
-                keyps.fromList(orb_keypoints);
-
-                Log.d(TAG, String.valueOf(largest_contour_i));
-                Log.d(TAG, String.valueOf(orb_keypoints.size()));
-                Log.d(TAG, String.valueOf(keyps.size()));
-
-                measDrawRects = new ArrayList<>();
-
-                customDetector.ptsDistance(largest_contour_i);
-                measDrawRects.add(customDetector.getDrawContour());
-
-                //Imgproc.drawContours(inputFrame, , -1, measCol, 2);
-
-
-            }
-
-            if (processing_pic != null && keyps != null) {
-                Features2d.drawKeypoints(processing_pic, keyps, processing_pic);
-                Imgproc.cvtColor(processing_pic, inputFrame, Imgproc.COLOR_RGB2BGRA);
             }
 
 

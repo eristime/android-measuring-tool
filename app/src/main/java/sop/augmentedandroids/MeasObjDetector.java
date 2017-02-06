@@ -41,7 +41,7 @@ public class MeasObjDetector {
     private int bound = 100;
     private static int max_bound = 255;
     private int max_area = 100000;
-    private int min_area = 10000;
+    private int min_area = 1000;
 
     private double dist0 = 0.0;
     private double dist1 = 0.0;
@@ -219,11 +219,14 @@ public class MeasObjDetector {
         Imgproc.findContours(gFrame, contours, mhierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // (0400)
+        List<MatOfPoint> temp = new ArrayList<>();
         for (int i = 0; i < contours.size(); i++) {
             if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
-                contours.remove(i);
+                //contours.remove(i);
+                temp.add(contours.get(i));
             }
         }
+        contours = temp;
 
         /*
         * \note     We still need to adapt the following features before measuring: (TODO)
