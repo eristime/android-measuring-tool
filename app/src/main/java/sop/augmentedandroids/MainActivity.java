@@ -5,21 +5,14 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
-import org.opencv.core.MatOfDMatch;
-import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
-import org.opencv.features2d.DescriptorExtractor;
-import org.opencv.features2d.DescriptorMatcher;
-import org.opencv.features2d.FeatureDetector;
-import org.opencv.features2d.Features2d;
 import org.opencv.features2d.KeyPoint;
 import org.opencv.imgproc.Imgproc;
 import android.content.Intent;
@@ -36,7 +29,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,8 +45,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private static boolean detecting = true;
-    private static boolean selecting_custom_ref = true;
-    private static boolean custom_ref = false;
     private static boolean saving = false;
 
     // Intent check-values
@@ -113,12 +103,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     MeasObjDetector measDetector;
     Measurements measurements;
 
-    MeasObjDetector customDetector;
-
-    MatOfKeyPoint keyps;
-    Mat processing_pic;
-
-    Mat customDescriptor = new Mat();
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -179,9 +163,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         cubeDetector = new RefObjDetector(56.0, 12.0, 120.0);
         measDetector = new MeasObjDetector();
         measurements = new Measurements();
-
-        customDetector = new MeasObjDetector();
-
     }
 
     @Override
@@ -232,7 +213,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
             case R.id.action_detection_toggle:
                 detecting = !detecting;
-                custom_ref = !custom_ref;
                 return  true;
 
             case R.id.action_save_image:
@@ -292,90 +272,11 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public void onCameraViewStopped() {}
 
-    public boolean onTouch(View view, MotionEvent event) {
-
-        ApplyCustomRef();
-
-        return false;
-    }
-
-    void ApplyCustomRef() {
-
-        DescriptorExtractor descriptor = DescriptorExtractor.create(DescriptorExtractor.ORB);
-        descriptor.compute(processing_pic, keyps, customDescriptor);
-        selecting_custom_ref = !selecting_custom_ref;
-    }
+    public boolean onTouch(View view, MotionEvent event) { return false; }
 
     public Mat onCameraFrame(Mat inputFrame) {
 
-        if(custom_ref) {
-
-            if(selecting_custom_ref) {
-
-                if (processing_pic == null || keyps == null) {
-                    processing_pic = new Mat();
-                    keyps = new MatOfKeyPoint();
-                }
-
-                Imgproc.cvtColor(inputFrame, processing_pic, Imgproc.COLOR_BGRA2RGB);
-
-                // Skip processing for as many frames as indicated by 'frameskip' variable
-                if (frame_i < frameskip) {
-                    frame_i++;
-                } else {
-                    frame_i = 0;
-
-                    /**
-                     * ORB detection testing
-                     */
-
-                    FeatureDetector orb = FeatureDetector.create(FeatureDetector.ORB);
-                    orb.detect(processing_pic, keyps);
-
-                    orb_keypoints = keyps.toList();
-
-                    customDetector.detectMeasurable(inputFrame);
-
-                    int largest_contour_i = 0;
-                    double largestArea = 0.0;
-                    for (int i = 0; i < customDetector.getContours().size(); i++) {
-                        customDetector.ptsDistance(i);
-                        double a = Imgproc.contourArea(customDetector.getContours().get(i));
-                        if (a > largestArea) {
-                            largestArea = a;
-                            largest_contour_i = i;
-                        }
-                    }
-
-                    if (customDetector.getContours().size() == 0) {
-                        return inputFrame;
-                    }
-
-                    FilterKeypoints(customDetector.getContours().get(largest_contour_i));
-
-                    keyps.fromList(orb_keypoints);
-
-                    customDetector.ptsDistance(largest_contour_i);
-                    measDrawRect = customDetector.getDrawContour();
-                }
-
-                if (processing_pic != null && keyps != null) {
-                    Features2d.drawKeypoints(processing_pic, keyps, processing_pic);
-                    Imgproc.cvtColor(processing_pic, inputFrame, Imgproc.COLOR_RGB2BGRA);
-                    Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
-                }
-            } else {
-
-                Mat processingDescriptor = new Mat();
-
-                DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
-                MatOfDMatch matches = new MatOfDMatch();
-                MatOfDMatch filteredMatches = new MatOfDMatch();
-
-            }
-
-
-        } else if(detecting) {
+        if(detecting) {
 
             // Skip processing for as many frames as indicated by 'frameskip' variable
             if (frame_i < frameskip) {
@@ -453,24 +354,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             }
         }
         return false;
-    }
-
-    void FilterKeypoints(MatOfPoint cnt) {
-
-        List<KeyPoint> filteredKeypoints = new ArrayList<>();
-
-        MatOfPoint2f cnt2 = new MatOfPoint2f(cnt.toArray());
-
-        for(int i=0; i<orb_keypoints.size(); i++) {
-
-            if(Imgproc.pointPolygonTest(cnt2, orb_keypoints.get(i).pt, false) >= 0) {
-
-                filteredKeypoints.add(orb_keypoints.get(i));
-
-            }
-        }
-
-        orb_keypoints = filteredKeypoints;
     }
 
     private void SaveImage(Mat mImage) {
