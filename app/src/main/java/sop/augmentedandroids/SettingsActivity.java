@@ -24,6 +24,7 @@ public class SettingsActivity extends AppCompatActivity{
     private int refObjSatMinimum;
     private int value;
     private String refObjMinContourArea;
+    private String refObjMaxContourArea;
     private String refObjSideRatioLimit;
 
     // MeasObjDetector variables
@@ -61,8 +62,12 @@ public class SettingsActivity extends AppCompatActivity{
         EditText dilationsEditText = (EditText) findViewById(R.id.edit_text_dilations);
         numberOfDilations = dilationsEditText.getText().toString();
 
-        EditText minContourAreaEditText = (EditText) findViewById(R.id.edit_text_min_contour_area);
-        refObjMinContourArea = minContourAreaEditText.getText().toString();
+        EditText refObjMinContourAreaEditText = (EditText) findViewById(R.id.edit_text_ref_obj_min_area);
+        refObjMinContourArea = refObjMinContourAreaEditText.getText().toString();
+
+
+        EditText refObjMaxContourAreaEditText = (EditText) findViewById(R.id.edit_text_ref_obj_max_area);
+        refObjMaxContourArea = refObjMaxContourAreaEditText.getText().toString();
 
         EditText sideRatioLimitEditText = (EditText) findViewById(R.id.edit_text_side_ratio_limit);
         refObjSideRatioLimit= sideRatioLimitEditText.getText().toString();
@@ -90,8 +95,13 @@ public class SettingsActivity extends AppCompatActivity{
             }
         }
         if (!refObjMinContourArea.isEmpty()) {
-            if (Double.parseDouble(refObjMinContourArea) >= 0) {
+            if (Double.parseDouble(refObjMinContourArea) >= 0 && Double.parseDouble(refObjMinContourArea) < Double.parseDouble(refObjMaxContourArea)) {
                 intent.putExtra("refObjMinContourArea", Double.parseDouble(refObjMinContourArea));
+            }
+        }
+        if (!refObjMaxContourArea.isEmpty()) {
+            if (Double.parseDouble(refObjMaxContourArea) >= 0 && Double.parseDouble(refObjMaxContourArea) > Double.parseDouble(refObjMinContourArea)) {
+                intent.putExtra("refObjMaxContourArea", Double.parseDouble(refObjMaxContourArea));
             }
         }
         if (!refObjSideRatioLimit.isEmpty()) {
@@ -101,7 +111,7 @@ public class SettingsActivity extends AppCompatActivity{
         }
         if (!measObjBound.isEmpty()) {
             if (Integer.parseInt( measObjBound) >= 0) {
-                intent.putExtra("measObjBound", Integer.parseInt( measObjBound));
+                intent.putExtra("measObjBound", Integer.parseInt(measObjBound));
             }
         }
         if (!measObjMaxBound.isEmpty()){
@@ -109,21 +119,21 @@ public class SettingsActivity extends AppCompatActivity{
                 intent.putExtra("measObjMaxBound", Integer.parseInt(measObjMaxBound));
             }
         }
-        if (measObjMaxArea.isEmpty()) {
-            if (Double.parseDouble(measObjMaxArea) >= 0) {
-                intent.putExtra("measObjMaxArea", Integer.parseInt(measObjMaxArea));
+        if (!measObjMinArea.isEmpty()) {
+            if (Double.parseDouble(measObjMinArea) >= 0 && Double.parseDouble(measObjMinArea) < Double.parseDouble(measObjMaxArea)) {
+                intent.putExtra("measObjMinArea", Integer.parseInt(measObjMinArea));
             }
         }
-        if (!measObjMinArea.isEmpty()) {
-            if (Double.parseDouble(measObjMinArea) >= 0) {
-                intent.putExtra("measObjMinArea", Integer.parseInt(measObjMinArea));
+        if (measObjMaxArea.isEmpty()) {
+            if (Double.parseDouble(measObjMaxArea) >= 0 && Double.parseDouble(measObjMaxArea) > Double.parseDouble(measObjMinArea)) {
+                intent.putExtra("measObjMaxArea", Integer.parseInt(measObjMaxArea));
             }
         }
         if (refObjHue >= 0 && refObjHue < 179) {
             intent.putExtra("refObjHue", refObjHue);
         }
         if (refObjColThreshold >= 0 && refObjColThreshold < 89) {
-            intent.putExtra("refObjColThreshold", refObjHue);
+            intent.putExtra("refObjColThreshold", refObjColThreshold);
         }
         if (refObjSatMinimum >= 0 && refObjSatMinimum < 255) {
             intent.putExtra("refObjSatMinimum", refObjSatMinimum);
@@ -213,7 +223,8 @@ public class SettingsActivity extends AppCompatActivity{
         // initialize TextViews
         TextView frameSkipTextView = (EditText) findViewById(R.id.edit_text_frameskip);
         TextView dilationsTextView = (EditText) findViewById(R.id.edit_text_dilations);
-        TextView minContourAreaTextView = (EditText) findViewById(R.id.edit_text_min_contour_area);
+        TextView refObjMinContourAreaTextView = (EditText) findViewById(R.id.edit_text_ref_obj_min_area);
+        TextView refObjMaxContourAreaTextView = (EditText) findViewById(R.id.edit_text_ref_obj_max_area);
         TextView sideRatioLimitTextView = (EditText) findViewById(R.id.edit_text_side_ratio_limit);
         TextView measObjBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_bound);
         TextView measObjMaxBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_bound);
@@ -223,7 +234,8 @@ public class SettingsActivity extends AppCompatActivity{
         // Get values from MainActivity through Intent
         frameSkip = getIntent().getStringExtra("frameSkip");
         numberOfDilations = getIntent().getStringExtra("numberOfDilations");
-        refObjMinContourArea = getIntent().getStringExtra("minContourArea");
+        refObjMinContourArea = getIntent().getStringExtra("refObjMinContourArea");
+        refObjMaxContourArea = getIntent().getStringExtra("refObjMaxContourArea");
         refObjSideRatioLimit = getIntent().getStringExtra("sideRatioLimit");
         measObjBound = getIntent().getStringExtra("measObjBound");
         measObjMaxBound = getIntent().getStringExtra("measObjMaxBound");
@@ -234,7 +246,8 @@ public class SettingsActivity extends AppCompatActivity{
         // Set values to TextViews
         frameSkipTextView.setText(frameSkip);
         dilationsTextView.setText(numberOfDilations);
-        minContourAreaTextView.setText(refObjMinContourArea);
+        refObjMinContourAreaTextView.setText(refObjMinContourArea);
+        refObjMaxContourAreaTextView.setText(refObjMaxContourArea);
         sideRatioLimitTextView.setText(refObjSideRatioLimit);
         measObjBoundTextView.setText(measObjBound);
         measObjMaxBoundTextView.setText(measObjMaxBound);

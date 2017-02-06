@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 	// MainActivity parameters
     private static int frameskip = 30;
     private static int frame_i = 0;
-    private static int numberOfDilations = 1;
     private static double cmToPxRatio = 1.0;
     private static double measSide1 = 0.0;
     private static double measSide2 = 0.0;
@@ -63,19 +62,22 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static double refRectLongSide = 0.0;
 
     // RefObjDetector parameters
+    // variables which are set by slide bar are ints instead of doubles because of poor support
     private static int refObjHue = 56;
     private static int refObjColThreshold = 12;
-    private static int refObjValue = 0;
     private static int refObjSatMinimum = 120;
+    private static int refObjValue = 0;
+    private static int numberOfDilations = 1;
     private static double refObjMinContourArea = 500;
+    private static double refObjMaxContourArea = 800000;
     private static double refObjSideRatioLimit = 1.45;
+
 
     // MeasObjDetector variables
     private static int measObjBound = 100;
     private static int measObjMaxBound = 255;
-    private static int measObjMaxArea = 1000;
-    private static int measObjMinArea = 10;
-
+    private static int measObjMinArea = 10000;
+    private static int measObjMaxArea = 100000;
 
     Camera c = Camera.open();
 
@@ -160,8 +162,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         measRects = new ArrayList<>();
         measDrawRects = new ArrayList<>();
 
-        cubeDetector = new RefObjDetector(56.0, 12.0, 120.0);
-        measDetector = new MeasObjDetector();
+        cubeDetector = new RefObjDetector(
+                refObjHue,
+                refObjColThreshold,
+                refObjSatMinimum,
+                numberOfDilations,
+                refObjMinContourArea,
+                refObjMaxContourArea,
+                refObjSideRatioLimit);
+
+        measDetector = new MeasObjDetector(measObjBound, measObjMaxBound, measObjMinArea, measObjMaxArea);
         measurements = new Measurements();
     }
 
@@ -199,7 +209,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 Intent intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra("frameSkip", Integer.toString(frameskip));
                 intent.putExtra("numberOfDilations", Integer.toString(numberOfDilations));
-                intent.putExtra("minContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("refObjMinContourArea", Double.toString(refObjMinContourArea));
+                intent.putExtra("refObjMaxContourArea", Double.toString(refObjMaxContourArea));
                 intent.putExtra("sideRatioLimit", Double.toString(refObjSideRatioLimit));
                 intent.putExtra("measObjBound", Integer.toString(measObjBound));
                 intent.putExtra("measObjMaxBound", Integer.toString(measObjMaxBound));
@@ -239,6 +250,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 refObjMinContourArea = data.getDoubleExtra("refObjMinContourArea", refObjMinContourArea);
                 cubeDetector.setMinContourArea(refObjMinContourArea);
 
+                refObjMaxContourArea = data.getDoubleExtra("refObjMaxContourArea", refObjMaxContourArea);
+                cubeDetector.setMaxContourArea(refObjMaxContourArea);
+
                 refObjSideRatioLimit = data.getDoubleExtra("refObjSideRatioLimit", refObjSideRatioLimit);
                 cubeDetector.setSideRatioLimit(refObjSideRatioLimit);
 
@@ -246,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 measDetector.setBound(measObjBound);
 
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
-                // Need for setBoundMax
+                // Need for setBoundMax??
 
                 measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
                 measDetector.setMax_area(measObjMaxArea);
@@ -256,13 +270,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 // Seekbar input
                 refObjHue = data.getIntExtra("refObjHue", refObjHue);
-                cubeDetector.setRefHue((double)refObjHue);
+                cubeDetector.setRefHue(refObjHue);
 
                 refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
-                cubeDetector.setColThreshold((double)refObjColThreshold);
+                cubeDetector.setColThreshold(refObjColThreshold);
 
                 refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
-                cubeDetector.setSatMinimum((double)refObjSatMinimum);
+                cubeDetector.setSatMinimum(refObjSatMinimum);
 
             }
         }

@@ -37,9 +37,9 @@ public class RefObjDetector {
     private double minContourArea;
     private double maxContourArea;
     private double[] rectCenterCols;
-    private double refHue;
-    private double colThreshold;
-    private double satMinimum;
+    private int refHue;
+    private int colThreshold;
+    private int satMinimum;
     private int numberOfDilations;
 
 
@@ -77,29 +77,32 @@ public class RefObjDetector {
         this.minContourArea = area;
     }
 
+    public void setMaxContourArea(double area) { this.maxContourArea = area; }
+
     public void setSideRatioLimit(double limit){
         this.sideRatioLimit = limit;
     }
 
-    public void setRefHue(double hue){ this.refHue = hue; }
+    public void setRefHue(int hue){ this.refHue = hue; }
 
-    public void setColThreshold(double t){ this.colThreshold = t; }
+    public void setColThreshold(int t){ this.colThreshold = t; }
 
-    public void setSatMinimum(double s){ this.satMinimum = s; }
+    public void setSatMinimum(int s){ this.satMinimum = s; }
 
 
     /* CONSTRUCTOR */
-    public RefObjDetector(double referenceHue, double colorThreshold, double saturationMinimum) {
+    public RefObjDetector(int referenceHue, int colorThreshold, int saturationMinimum, int numberOfDilations,
+                          double contourAreaMinimum, double contourAreaMaximum, double sideRatioLimit) {
 
         rotRect = null;
         rotRectCnt = new ArrayList<>();
-        minContourArea = 500;
-        maxContourArea = 800000;
-        numberOfDilations = 1;
-        sideRatioLimit = 1.45;
         this.refHue = referenceHue;
         this.colThreshold = colorThreshold;
         this.satMinimum = saturationMinimum;
+        this.numberOfDilations = numberOfDilations;
+        this.minContourArea = contourAreaMinimum;
+        this.maxContourArea = contourAreaMaximum;
+        this.sideRatioLimit = sideRatioLimit;
     }
 
 

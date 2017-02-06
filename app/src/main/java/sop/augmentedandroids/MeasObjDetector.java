@@ -52,7 +52,11 @@ public class MeasObjDetector {
     * \param    None
     * \returns  None
     */
-    public MeasObjDetector() {
+    public MeasObjDetector(int bound, int boundMaximum, int contourAreaMinimum, int contourAreaMaximum) {
+        this.bound = bound;
+        this.max_bound = boundMaximum;
+        this.min_area = contourAreaMinimum;
+        this.max_area = contourAreaMaximum;
         contours = new ArrayList<>();
         _minAreaRect = new RotatedRect();
     }
