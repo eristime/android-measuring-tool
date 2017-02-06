@@ -1,10 +1,17 @@
 package sop.augmentedandroids;
 
+import android.util.Log;
+
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
@@ -12,8 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Janne on 6.12.2016.
- *
+ * \class   This class detects a reference measurement object using edge-detection based algorithm
+ * \brief   Reference object detection class
+ * \author  Janne Mustaniemi
  */
 
 public class RefObjDetector {
@@ -82,9 +90,6 @@ public class RefObjDetector {
     public void setSatMinimum(int s){ this.satMinimum = s; }
 
 
-
-
-
     /* CONSTRUCTOR */
     public RefObjDetector(int referenceHue, int colorThreshold, int saturationMinimum, int numberOfDilations,
                           double contourAreaMinimum, double contourAreaMaximum, double sideRatioLimit) {
@@ -101,7 +106,7 @@ public class RefObjDetector {
     }
 
 
-    // CALCULATE AVG RECT SIDE LENGTH
+    // CALCULATE AVERAGE RECTANGLE SIDE LENGTH
     private double RectAvgLength(Point[] ps) {
         double L1 = GetDist(ps[0], ps[1]);
         double L2 = GetDist(ps[1], ps[2]);
@@ -111,6 +116,7 @@ public class RefObjDetector {
         return ((L1 + L2 + L3 + L4)/4);
     }
 
+    // CALCULATE RATIO OF SHORT AND LONG SIDE OF RECTANGLE
     private double CalcRectSideRatio(Point[] ps) {
         double L1 = GetDist(ps[0], ps[1]);
         double L2 = GetDist(ps[1], ps[2]);
@@ -122,11 +128,12 @@ public class RefObjDetector {
         }
     }
 
+    // CALCULATE DISTANCE BETWEEN TWO COORDINATE POINTS
     private double GetDist(Point p1, Point p2) {
         return Math.sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
     }
 
-    // CALCULATE ROTATED RECTANGLE (MAGENTA ONE)
+    // CALCULATE ROTATED RECTANGLE CONTOUR
     private void CalcRotRectContour() {
 
         Point[] ps = new Point[4];
@@ -139,6 +146,7 @@ public class RefObjDetector {
         rotRectCnt = cnt;
     }
 
+    // SIMPLE DOUBLE->INT CONVERSION WITH ROUNDING
     private int DoubleToInt(double a) {
         return ((int) Math.round(a));
     }
@@ -180,10 +188,9 @@ public class RefObjDetector {
     /* THE MAIN PROCESSING FUNCTION FOR IMAGE FRAME */
     public synchronized void ProcessFrame(Mat frame_in) {
 
-        //Mat frame = frame_in.clone();
-        //Mat frameHSV = frame_in.clone();
         Mat frame = new Mat();
         Mat frameHSV = new Mat();
+        Mat hueMat = new Mat();
 
         boolean rectUpdated = false;
 
@@ -193,9 +200,14 @@ public class RefObjDetector {
         Imgproc.cvtColor(frame_in, frame, Imgproc.COLOR_BGR2GRAY);
         Imgproc.cvtColor(frame_in, frameHSV, Imgproc.COLOR_BGR2HSV);
 
-        Imgproc.Canny(frame, frame, 50.0, 130.0);
-        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), numberOfDilations);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
-        //Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+
+        Core.inRange(frameHSV, new Scalar(refHue-colThreshold, 0, 0), new Scalar(refHue+colThreshold, 255, 255), hueMat);
+
+        Imgproc.erode(frame, frame, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+
+        Imgproc.Canny(hueMat, frame, 50.0, 130.0);
+
+        Imgproc.dilate(frame, frame, new Mat(), new Point(-1,-1), 1);   // Improves ignoring of small shapes that are not squarish, fps impact of 1
 
         Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -210,18 +222,24 @@ public class RefObjDetector {
         for (int i=0; i<contoursCounter; i++) {
 
             MatOfPoint contour = contours.get(i);
+
+            // Object contour area
             double area = Imgproc.contourArea(contour, true);
 
+            // Calculate object moments to get the xy coordinates of its center
             Moments m = Imgproc.moments(contour);
 
             double centerX = m.get_m10() / m.get_m00();
             double centerY = m.get_m01() / m.get_m00();
 
+            // Get average hue and saturation values around the center area of the object
             double[] contourCols = CalcAvgCenterCols(frameHSV, new Point(DoubleToInt(centerX), DoubleToInt(centerY)), 4);
             double hue = contourCols[0];
             double sat = contourCols[1];
 
+            // Determine if object's hue is within allowed limits
             boolean hueOK = (hue > (refHue - colThreshold)) && (hue < (refHue + colThreshold));
+
             if (hueOK) {
 
                 MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
@@ -229,8 +247,10 @@ public class RefObjDetector {
 
                 double dist = Imgproc.arcLength(contour2f, true)*0.02;
 
+                // Create a polygon approximation of contour2f, using 'dist' as accurary parameter, and storing the result in 'curve'
                 Imgproc.approxPolyDP(contour2f, curve, dist, true);
 
+                // Create a minimum size rotated rectangle approximation around the object
                 RotatedRect r = Imgproc.minAreaRect(curve);
                 Point[] ps = new Point[4];
                 r.points(ps);
@@ -240,6 +260,7 @@ public class RefObjDetector {
                 double L1 = GetDist(ps[0], ps[1]);
                 double L2 = GetDist(ps[1], ps[2]);
 
+                // Compare rectangle side lengths and determine which is short and which is long
                 if(L1 > L2) {
                     sideRatio = L1/L2;
                     shortSide = L2;
@@ -250,6 +271,10 @@ public class RefObjDetector {
                     longSide = L2;
                 }
 
+                /*
+                 *If detected object has acceptable rectangle side ratio, area and color saturation,
+                 * accept it as the true reference object and update class member variables
+                 */
                 if (sideRatio <= sideRatioLimit && area > biggestContourArea && area < maxContourArea && sat >= satMinimum && area > minContourArea) {
                     biggestContourArea = area;
                     rectCenterCols = contourCols;

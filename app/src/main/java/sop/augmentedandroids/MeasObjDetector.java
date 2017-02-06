@@ -1,7 +1,5 @@
 package sop.augmentedandroids;
 
-import android.util.Log;
-
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -38,10 +36,10 @@ public class MeasObjDetector {
     List<MatOfPoint> drawContour;
     private static final String TAG = "SOP::MeasObj";
 
-    private int bound;
-    private static int max_bound;
-    private int min_area;
-    private int max_area;
+    private int bound = 100;
+    private static int max_bound = 255;
+    private int max_area = 100000;
+    private int min_area = 1000;
 
     private double dist0 = 0.0;
     private double dist1 = 0.0;
@@ -223,9 +221,12 @@ public class MeasObjDetector {
         Imgproc.findContours(gFrame, contours, mhierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // (0400)
-        for (int i = 0; i < contours.size(); i++) {
-            if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
-                contours.remove(i);
+        int cnt_count = contours.size();
+        if(cnt_count > 0) {
+            for (int i = cnt_count; i == 0; i--) {
+                if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
+                    contours.remove(i);
+                }
             }
         }
 
