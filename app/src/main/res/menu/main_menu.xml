@@ -13,5 +13,14 @@
     <item
         android:id="@+id/action_settings"
         android:title="@string/main_menu_item1" />
+    <group android:id="@+id/shape_option"
+        android:checkableBehavior="single"
+        android:visible="true"
+        android:enabled="true">
+        <item android:title="Rectangle"
+            android:id="@+id/shape_rectangle" />
+        <item android:title="Circle"
+            android:id="@+id/shape_circle" />
+    </group>
     <!-- app:showAsAction="never" -->
 </menu>
