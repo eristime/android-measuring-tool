@@ -151,7 +151,8 @@ public class RefObjDetector {
         return ((int) Math.round(a));
     }
 
-    /* Selects pixels in rectangular area of width 'scanWidth' around the 'rectCenter' and
+    /**
+     * Selects pixels in rectangular area of width 'scanWidth' around the 'rectCenter' and
      * calculates the average RGB values of those pixels. This gives much more accurate
      * result than single pixel, since there is some noise in most mobile cameras.
      */
@@ -271,7 +272,7 @@ public class RefObjDetector {
                     longSide = L2;
                 }
 
-                /*
+                /**
                  *If detected object has acceptable rectangle side ratio, area and color saturation,
                  * accept it as the true reference object and update class member variables
                  */
@@ -291,6 +292,5 @@ public class RefObjDetector {
         if (rectUpdated) {
             CalcRotRectContour();   // This is the contour for on-screen drawing
         }
-
     }
 }

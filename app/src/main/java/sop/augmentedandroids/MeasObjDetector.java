@@ -47,7 +47,7 @@ public class MeasObjDetector {
 
     RotatedRect _minAreaRect;
 
-    /*
+    /**
     * \brief    Constructor of the class
     * \param    None
     * \returns  None
@@ -65,7 +65,7 @@ public class MeasObjDetector {
         return _minAreaRect;
     }
 
-    /*
+    /**
     * \brief    Method to get the valid contours for detected blobs
     * \param    None
     * \returns  MatOfPoints for valid contours
@@ -75,7 +75,7 @@ public class MeasObjDetector {
         return contours;
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
     * \param    min is minimum area that the blob has to meet in order to pass the algorithm
     * \returns  None
@@ -89,7 +89,7 @@ public class MeasObjDetector {
         min_area = val;
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
     * \param    max_area is maximum area that the blob has to meet in order to pass the algorithm
     * \returns  None
@@ -99,7 +99,7 @@ public class MeasObjDetector {
         max_area = val;
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
     * \param    bound is minimum threadshold that the blob has to meet in order to pass the algorithm
     * \returns  None
@@ -109,7 +109,7 @@ public class MeasObjDetector {
         bound = val;
     }
 
-    /*
+    /**
     * \brief    Function to calculate distance between point set and middle point of the system
     * \param    Int i active blob
     * \returns  None
@@ -121,7 +121,7 @@ public class MeasObjDetector {
         MatOfPoint2f contourAsFloat = new MatOfPoint2f();
         contours.get(i).convertTo(contourAsFloat, CvType.CV_32F);
 
-        /* option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
+        /** option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
         * http://stackoverflow.com/questions/11273588/how-to-convert-matofpoint-to-matofpoint2f-in-opencv-java-api
         * */
 
@@ -144,7 +144,7 @@ public class MeasObjDetector {
     }
 
 
-    /*
+    /**
     * \brief    Method to get the smaller diameter of the blob
     * \param    None
     * \returns  Double diameter
@@ -154,7 +154,7 @@ public class MeasObjDetector {
         return Math.min(dist0, dist1);
     }
 
-    /*
+    /**
     * \brief    Method to get the larger diameter of the blob
     * \param    None
     * \returns  Double diameter
@@ -163,7 +163,7 @@ public class MeasObjDetector {
     public double getMaxLen() { return Math.max(dist0, dist1);
     }
 
-    /*
+    /**
     * \brief    Method to get the middle point
     * \param    None
     * \returns  Double middle
@@ -172,7 +172,7 @@ public class MeasObjDetector {
     public Point getMidpoint() { return middle;
     }
 
-    /*
+    /**
     * \brief    Algorithm for blob detection and filtering
     * \param    inputFrame is the captured frame from public Mat onCameraFrame()
     * \returns  None
@@ -205,13 +205,13 @@ public class MeasObjDetector {
         Mat mhierarchy = new Mat();
 
         // (0100)
-        /*
+        /**
         *   \note   This works smoother than Core.mixChannels(). Needs more investigation if this is best method to allocate the filtered image
         */
         Imgproc.cvtColor(inputFrame, gFrame, Imgproc.COLOR_BGRA2GRAY);
 
         // (0200)
-        /*
+        /**
         *   \note   This works smoother than Imgproc.blur() or Imgproc.adaptiveThreshold()  but we still need to implement blur/adaptive methods to reduce unwanted noise
         *           There is also possibility to use Imgproc.inRange() which would also require Core.dilate()
         */
@@ -230,7 +230,7 @@ public class MeasObjDetector {
             }
         }
 
-        /*
+        /**
         * \note     We still need to adapt the following features before measuring: (TODO)
         *           - adaptiveThreadshold of some kind to avoid unwanted noise in measurements
         */
