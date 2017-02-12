@@ -13,7 +13,6 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
-import org.opencv.features2d.KeyPoint;
 import org.opencv.imgproc.Imgproc;
 import android.content.Intent;
 import android.graphics.Bitmap;
