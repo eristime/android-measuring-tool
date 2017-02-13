@@ -4,6 +4,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
@@ -190,7 +191,7 @@ public class MeasObjDetector {
     *               MAXVAL
     *           (ELSE)
     *               0
-    * (0300) Find the applicable contours from the threadshold detected Mat and return the full RETR_TREE points
+    * (0300) Blur the image so we can find the applicable contours from the threadshold detected Mat and return the full RETR_TREE points
     *        RETR_TREE is used is current implementation but RETR_EXTERNAL could be used to save progress time
     *        \note Please see if the current implementation is good enough
     * (0400) Filter the found blobs using the parameters set (min_area, max_area)
@@ -218,6 +219,7 @@ public class MeasObjDetector {
         Imgproc.threshold(gFrame, gFrame, bound, max_bound, Imgproc.THRESH_BINARY);
 
         // (0300)
+        Imgproc.blur(gFrame, gFrame, new Size(2,2));
         Imgproc.findContours(gFrame, contours, mhierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // (0400)
