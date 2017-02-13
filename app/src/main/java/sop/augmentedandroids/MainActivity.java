@@ -68,8 +68,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int refObjSatMinimum = 120;
     private static int refObjValue = 0;
     private static int numberOfDilations = 1;
-    private static double refObjMinContourArea = 500;
-    private static double refObjMaxContourArea = 800000;
+    private static double refObjMinContourArea = 500.0;
+    private static double refObjMaxContourArea = 800000.0;
     private static double refObjSideRatioLimit = 1.45;
 
 
@@ -260,13 +260,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 measDetector.setBound(measObjBound);
 
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                measDetector.setMaxBound(measObjMaxBound);
                 // Need for setBoundMax??
-
-                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
-                measDetector.setMax_area(measObjMaxArea);
 
                 measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
                 measDetector.setMin(measObjMinArea);
+
+                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measDetector.setMax_area(measObjMaxArea);
 
                 // Seekbar input
                 refObjHue = data.getIntExtra("refObjHue", refObjHue);

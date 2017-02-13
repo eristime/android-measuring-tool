@@ -26,6 +26,7 @@ import java.util.List;
 
 public class RefObjDetector {
 
+    private static final String TAG = "SOP::RefObj";
     /* CLASS VARS */
     private RotatedRect rotRect;
     private double rectSideRatio;
@@ -71,23 +72,37 @@ public class RefObjDetector {
     /* SETTERS */
     public void setNumberOfDilations(int n){
         this.numberOfDilations = n;
+        Log.d(TAG, "numberOfDilations" + numberOfDilations);
     }
 
     public void setMinContourArea(double area){
         this.minContourArea = area;
+        Log.d(TAG, "minContourArea " + minContourArea);
     }
 
-    public void setMaxContourArea(double area) { this.maxContourArea = area; }
+    public void setMaxContourArea(double area) {
+        this.maxContourArea = area;
+        Log.d(TAG, "maxContourArea " + maxContourArea);
+    }
 
     public void setSideRatioLimit(double limit){
         this.sideRatioLimit = limit;
+        Log.d(TAG, "sideRatioLimit " + sideRatioLimit);
     }
 
-    public void setRefHue(int hue){ this.refHue = hue; }
+    public void setRefHue(int hue){ this.refHue = hue;
+        Log.d(TAG, "refHue " + refHue);
+    }
 
-    public void setColThreshold(int t){ this.colThreshold = t; }
+    public void setColThreshold(int t){
+        this.colThreshold = t;
+        Log.d(TAG, "colThreshold " + colThreshold);
+    }
 
-    public void setSatMinimum(int s){ this.satMinimum = s; }
+    public void setSatMinimum(int s){
+        this.satMinimum = s;
+        Log.d(TAG, "satMinimum " + satMinimum);
+    }
 
 
     /* CONSTRUCTOR */

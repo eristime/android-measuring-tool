@@ -16,13 +16,13 @@ public class SettingsActivity extends AppCompatActivity{
 
     // User inputs are strings because the input is given through EditText
     private String frameSkip;
-    private String numberOfDilations;
 
     // RefObjDetector parameters
     private int refObjHue;
     private int refObjColThreshold;
     private int refObjSatMinimum;
     private int value;
+    private String numberOfDilations;
     private String refObjMinContourArea;
     private String refObjMaxContourArea;
     private String refObjSideRatioLimit;
@@ -110,22 +110,22 @@ public class SettingsActivity extends AppCompatActivity{
             }
         }
         if (!measObjBound.isEmpty()) {
-            if (Integer.parseInt( measObjBound) >= 0) {
+            if (Integer.parseInt(measObjBound) >= 0 && Integer.parseInt(measObjBound) < Integer.parseInt(measObjMaxBound)) {
                 intent.putExtra("measObjBound", Integer.parseInt(measObjBound));
             }
         }
         if (!measObjMaxBound.isEmpty()){
-            if (Integer.parseInt(measObjMaxBound) >= 0) {
+            if (Integer.parseInt(measObjMaxBound) >= 0 && Integer.parseInt(measObjBound) < Integer.parseInt(measObjMaxBound) && Integer.parseInt(measObjMaxBound) <= 255) {
                 intent.putExtra("measObjMaxBound", Integer.parseInt(measObjMaxBound));
             }
         }
         if (!measObjMinArea.isEmpty()) {
-            if (Double.parseDouble(measObjMinArea) >= 0 && Double.parseDouble(measObjMinArea) < Double.parseDouble(measObjMaxArea)) {
+            if (Integer.parseInt(measObjMinArea) >= 0 && Integer.parseInt(measObjMinArea) < Integer.parseInt(measObjMaxArea)) {
                 intent.putExtra("measObjMinArea", Integer.parseInt(measObjMinArea));
             }
         }
-        if (measObjMaxArea.isEmpty()) {
-            if (Double.parseDouble(measObjMaxArea) >= 0 && Double.parseDouble(measObjMaxArea) > Double.parseDouble(measObjMinArea)) {
+        if (!measObjMaxArea.isEmpty()) {
+            if (Integer.parseInt(measObjMaxArea) >= 0 && Integer.parseInt(measObjMaxArea) > Integer.parseInt(measObjMinArea)) {
                 intent.putExtra("measObjMaxArea", Integer.parseInt(measObjMaxArea));
             }
         }
@@ -228,7 +228,7 @@ public class SettingsActivity extends AppCompatActivity{
         TextView sideRatioLimitTextView = (EditText) findViewById(R.id.edit_text_side_ratio_limit);
         TextView measObjBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_bound);
         TextView measObjMaxBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_bound);
-        TextView measObjMaxAreaAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_area);
+        TextView measObjMaxAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_area);
         TextView measObjMinAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_min_area);
 
         // Get values from MainActivity through Intent
@@ -251,7 +251,7 @@ public class SettingsActivity extends AppCompatActivity{
         sideRatioLimitTextView.setText(refObjSideRatioLimit);
         measObjBoundTextView.setText(measObjBound);
         measObjMaxBoundTextView.setText(measObjMaxBound);
-        measObjMaxAreaAreaTextView.setText(measObjMaxArea);
+        measObjMaxAreaTextView.setText(measObjMaxArea);
         measObjMinAreaTextView.setText(measObjMinArea);
     }
 }
