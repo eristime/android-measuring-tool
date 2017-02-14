@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int refObjHue = 56;
     private static int refObjColThreshold = 12;
     private static int refObjSatMinimum = 120;
-    private static int refObjValue = 0;
     private static int numberOfDilations = 1;
     private static double refObjMinContourArea = 500.0;
     private static double refObjMaxContourArea = 800000.0;
@@ -218,7 +217,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 intent.putExtra("measObjMinArea", Integer.toString(measObjMinArea));
                 intent.putExtra("refObjHue", refObjHue);
                 intent.putExtra("refObjColThreshold", refObjColThreshold);
-                intent.putExtra("refObjSatMinimum", refObjSatMinimum);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -275,9 +273,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
                 cubeDetector.setColThreshold(refObjColThreshold);
-
-                refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
-                cubeDetector.setSatMinimum(refObjSatMinimum);
 
             }
         }
