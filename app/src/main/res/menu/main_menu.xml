@@ -8,9 +8,6 @@
         android:id="@+id/action_save_image"
         android:title="@string/save_image_item" />
     <item
-        android:id="@+id/action_flaslight"
-        android:title="Flashlight" />
-    <item
         android:id="@+id/action_settings"
         android:title="@string/main_menu_item1" />
     <group android:id="@+id/shape_option"

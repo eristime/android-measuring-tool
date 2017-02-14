@@ -28,6 +28,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,10 +66,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int refObjHue = 56;
     private static int refObjColThreshold = 12;
     private static int refObjSatMinimum = 120;
-    private static int refObjValue = 0;
     private static int numberOfDilations = 1;
-    private static double refObjMinContourArea = 500;
-    private static double refObjMaxContourArea = 800000;
+    private static double refObjMinContourArea = 500.0;
+    private static double refObjMaxContourArea = 800000.0;
     private static double refObjSideRatioLimit = 1.45;
 
 
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int measObjBound = 100;
     private static int measObjMaxBound = 255;
     private static int measObjMinArea = 10000;
-    private static int measObjMaxArea = 50000;
+    private static int measObjMaxArea = 100000;
 
     Camera c = Camera.open();
 
@@ -215,7 +215,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 intent.putExtra("measObjMinArea", Integer.toString(measObjMinArea));
                 intent.putExtra("refObjHue", refObjHue);
                 intent.putExtra("refObjColThreshold", refObjColThreshold);
-                intent.putExtra("refObjSatMinimum", refObjSatMinimum);
                 startActivityForResult(intent, 1);
                 return true;
 
@@ -264,13 +263,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 measDetector.setBound(measObjBound);
 
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                measDetector.setMaxBound(measObjMaxBound);
                 // Need for setBoundMax??
-
-                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
-                measDetector.setMax_area(measObjMaxArea);
 
                 measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
                 measDetector.setMin(measObjMinArea);
+
+                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measDetector.setMax_area(measObjMaxArea);
 
                 // Seekbar input
                 refObjHue = data.getIntExtra("refObjHue", refObjHue);
@@ -278,9 +278,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
                 cubeDetector.setColThreshold(refObjColThreshold);
-
-                refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
-                cubeDetector.setSatMinimum(refObjSatMinimum);
 
             }
         }
@@ -290,7 +287,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public void onCameraViewStopped() {}
 
-    public boolean onTouch(View view, MotionEvent event) { return false; }
+    public boolean onTouch(View view, MotionEvent event) {
+        detecting = !detecting;
+        return false;
+    }
 
     public Mat onCameraFrame(Mat inputFrame) {
 
@@ -372,10 +372,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         if(circleOption) {
 
-            int radius = (int)((Math.sqrt(measRectLongSide*measRectShortSide))/2);
-            double area = 3.14 * (radius*radius);
-            Core.circle(inputFrame, measRect.center, radius, measCol, 2);
-            Core.putText(inputFrame, "area: " + nF2.format(area), measRect.center, uiFont, 2, textCol, 1);
+            double radius = ((Math.sqrt(measRectLongSide*measRectShortSide))/2);
+            double radius_cm = radius * cmToPxRatio;
+            double area_cm = 3.14 * (radius_cm*radius_cm);
+            Point circleTextPos1 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 20*uiTextScale);
+            Point circleTextPos2 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 40*uiTextScale);
+            Core.circle(inputFrame, measRect.center, (int)radius, measCol, 1);
+            Core.putText(inputFrame, "radius: " + nF1.format(radius_cm) + "cm", circleTextPos1, uiFont, uiTextScale, textCol, 1);
+            Core.putText(inputFrame, "area: " + nF1.format(area_cm) + "cm^2", circleTextPos2, uiFont, uiTextScale, textCol, 1);
 
         } else {
 

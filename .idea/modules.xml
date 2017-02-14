@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/AugmentedAndroids-worktitle-master.iml" filepath="$PROJECT_DIR$/AugmentedAndroids-worktitle-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/AugmentedAndroids-worktitle-feat.iml" filepath="$PROJECT_DIR$/AugmentedAndroids-worktitle-feat.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/openCVLibrary24131/openCVLibrary24131.iml" filepath="$PROJECT_DIR$/openCVLibrary24131/openCVLibrary24131.iml" />
     </modules>

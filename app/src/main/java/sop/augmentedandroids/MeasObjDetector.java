@@ -1,9 +1,12 @@
 package sop.augmentedandroids;
 
+import android.util.Log;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +39,10 @@ public class MeasObjDetector {
     List<MatOfPoint> drawContour;
     private static final String TAG = "SOP::MeasObj";
 
-    private int bound = 100;
-    private static int max_bound = 255;
-    private int max_area = 100000;
-    private int min_area = 1000;
+    private int bound;
+    private static int max_bound;
+    private int max_area;
+    private int min_area;
 
     private double dist0 = 0.0;
     private double dist1 = 0.0;
@@ -85,8 +88,16 @@ public class MeasObjDetector {
         return drawContour;
     }
 
+
+   /**
+    * \brief    Method to set the required parameters for valid blobs
+    * \param    min_area is minimum area that the blob has to meet in order to pass the algorithm
+    * \returns  None
+    */
+
     public void setMin(int val) {
         min_area = val;
+        Log.d(TAG, "min_area: " + min_area);
     }
 
     /**
@@ -97,19 +108,33 @@ public class MeasObjDetector {
 
     public void setMax_area(int val) {
         max_area = val;
+        Log.d(TAG, "max_area: " + max_area);
     }
 
     /**
     * \brief    Method to set the required parameters for valid blobs
-    * \param    bound is minimum threadshold that the blob has to meet in order to pass the algorithm
+    * \param    bound is minimum threshold that the blob has to meet in order to pass the algorithm
     * \returns  None
     */
 
     public void setBound(int val) {
         bound = val;
+        Log.d(TAG, "bound " + bound);
     }
 
+
     /**
+     * \brief    Method to set the required parameters for valid blobs
+     * \param    bound is maximum threshold that the blob has to meet in order to pass the algorithm
+     * \returns  None
+     */
+
+    public void setMaxBound(int val) {
+        max_bound = val;
+        Log.d(TAG, "max_bound " + max_bound);
+    }
+
+    /*
     * \brief    Function to calculate distance between point set and middle point of the system
     * \param    Int i active blob
     * \returns  None
@@ -121,9 +146,10 @@ public class MeasObjDetector {
         MatOfPoint2f contourAsFloat = new MatOfPoint2f();
         contours.get(i).convertTo(contourAsFloat, CvType.CV_32F);
 
-        /** option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
-        * http://stackoverflow.com/questions/11273588/how-to-convert-matofpoint-to-matofpoint2f-in-opencv-java-api
-        * */
+        /**
+		 * option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
+         * http://stackoverflow.com/questions/11273588/how-to-convert-matofpoint-to-matofpoint2f-in-opencv-java-api
+         */
 
         _minAreaRect = Imgproc.minAreaRect(contourAsFloat);
         Point[] pts = new Point[4];
@@ -190,7 +216,7 @@ public class MeasObjDetector {
     *               MAXVAL
     *           (ELSE)
     *               0
-    * (0300) Find the applicable contours from the threadshold detected Mat and return the full RETR_TREE points
+    * (0300) Blur the image so we can find the applicable contours from the threshold detected Mat and return the full RETR_TREE points
     *        RETR_TREE is used is current implementation but RETR_EXTERNAL could be used to save progress time
     *        \note Please see if the current implementation is good enough
     * (0400) Filter the found blobs using the parameters set (min_area, max_area)
@@ -218,16 +244,21 @@ public class MeasObjDetector {
         Imgproc.threshold(gFrame, gFrame, bound, max_bound, Imgproc.THRESH_BINARY);
 
         // (0300)
+        Imgproc.blur(gFrame, gFrame, new Size(2,2));
         Imgproc.findContours(gFrame, contours, mhierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // (0400)
         int cnt_count = contours.size();
         if(cnt_count > 0) {
-            for (int i = cnt_count; i == 0; i--) {
-                if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
-                    contours.remove(i);
+            List<MatOfPoint> found = new ArrayList<MatOfPoint>();
+            for(MatOfPoint contour : contours){
+                if(Imgproc.contourArea(contour) < min_area || Imgproc.contourArea(contour) > max_area){
+                    found.add(contour);
+                } else {
+                    //Log.d(TAG, "contourArea: " + Double.toString(Imgproc.contourArea(contour)));
                 }
             }
+            contours.removeAll(found);
         }
 
         /**
