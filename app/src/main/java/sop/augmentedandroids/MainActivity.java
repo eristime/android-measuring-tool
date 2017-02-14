@@ -363,51 +363,70 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private Mat OnScreenDrawings(Mat inputFrame) {
 
-        // Draw the reference rectangle on-screen in magenta color
+        /**
+         *  Drawing of miscellaneous info texts to user interface
+         *
+         */
+        // Write calculated centimeters per pixel ratio on-screen
+        Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
+
+        // Debugging: Write reference rect side ratio on-screen
+        //Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
+        // Debugging: Write reference rect area on-screen
+        //Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()) + "px^2, new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
+
+        // Debugging: Draw a circle marker and write color info of rotated rectangle center point
+        //DrawRotRectCenterData(inputFrame);
+
+
+        /**
+         *  Draw the reference rectangle on-screen in magenta color
+         *
+         */
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
-        // Write reference rect side ratio on-screen
-        Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
-        // Write reference rect area on-screen
-        Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
+
+        if(rotRect != null) {
+            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 120.0), uiFont, 2, textCol, 1);
+
+            if(!circleOption) {
+                Core.putText(inputFrame, "meas. angle: " + nF1.format(measRect.angle), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
+            }
+
+            // Debugging:
+            //Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 220), uiFont, uiTextScale, textCol, uiTextThickness);
+        }
+
+
+        /**
+         *  Drawing the measured rectangle of circle and informative texts about measured dimensions
+         *
+         */
 
         if(circleOption) {
+
+            Point circleTextPos1 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 25*uiTextScale);
+            Point circleTextPos2 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 40*uiTextScale);
 
             double radius = ((Math.sqrt(measRectLongSide*measRectShortSide))/2);
             double radius_cm = radius * cmToPxRatio;
             double area_cm = 3.14 * (radius_cm*radius_cm);
-            Point circleTextPos1 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 20*uiTextScale);
-            Point circleTextPos2 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 40*uiTextScale);
+
             Core.circle(inputFrame, measRect.center, (int)radius, measCol, 1);
             Core.putText(inputFrame, "radius: " + nF1.format(radius_cm) + "cm", circleTextPos1, uiFont, uiTextScale, textCol, 1);
             Core.putText(inputFrame, "area: " + nF1.format(area_cm) + "cm^2", circleTextPos2, uiFont, uiTextScale, textCol, 1);
 
         } else {
 
+            Point rectTextPos1 = new Point(measRect.center.x, measRect.center.y - 10*uiTextScale);
+            Point rectTextPos2 = new Point(measRect.center.x, measRect.center.y + 10*uiTextScale);
+
             // Draw the measured rectangle on-screen in magenta color
             Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
 
-        }
+            // Write dimensions of measured object on-screen
+            Core.putText(inputFrame, "side 1: " + nF1.format(measSide1) + " cm", rectTextPos1, uiFont, uiTextScale, textCol, 1);
+            Core.putText(inputFrame, "side 2: " + nF1.format(measSide2) + " cm", rectTextPos2, uiFont, uiTextScale, textCol, 1);
 
-        // Write calculated centimeters per pixel ratio on-screen
-        Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
-
-        // Write dimensions of measured object on-screen
-        Core.putText(inputFrame, "MEASURING SIDES..", new Point(10.0, 600), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "1: " + nF1.format(measSide1) + " cm", new Point(10.0, 640), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "2: " + nF1.format(measSide2) + " cm", new Point(10.0, 680), uiFont, uiTextScale, textCol, uiTextThickness);
-
-        // Draw a circle marker and write color info of rotated rectangle center point
-        DrawRotRectCenterData(inputFrame);
-
-        if(rotRect != null) {
-            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 120.0), uiFont, 2, textCol, 1);
-
-            if(!circleOption) {
-                Core.putText(inputFrame, "meas. angle: " + nF1.format(measRect.angle), new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
-            }
-
-            // For debugging purposes
-            //Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 220), uiFont, uiTextScale, textCol, uiTextThickness);
         }
 
         return inputFrame;
