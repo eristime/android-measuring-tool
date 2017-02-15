@@ -21,8 +21,6 @@ public class SettingsActivity extends AppCompatActivity{
     // RefObjDetector parameters
     private int refObjHue;
     private int refObjColThreshold;
-    private int refObjSatMinimum;
-    private int value;
     private String refObjMinContourArea;
     private String refObjMaxContourArea;
     private String refObjSideRatioLimit;
@@ -36,8 +34,6 @@ public class SettingsActivity extends AppCompatActivity{
     // TextViews
     private TextView hueTextView;
     private TextView refObjColThresholdTextView;
-    private TextView saturationTextView;
-    private TextView valueTextView;
 
 
     @Override
@@ -64,7 +60,6 @@ public class SettingsActivity extends AppCompatActivity{
 
         EditText refObjMinContourAreaEditText = (EditText) findViewById(R.id.edit_text_ref_obj_min_area);
         refObjMinContourArea = refObjMinContourAreaEditText.getText().toString();
-
 
         EditText refObjMaxContourAreaEditText = (EditText) findViewById(R.id.edit_text_ref_obj_max_area);
         refObjMaxContourArea = refObjMaxContourAreaEditText.getText().toString();
@@ -110,22 +105,22 @@ public class SettingsActivity extends AppCompatActivity{
             }
         }
         if (!measObjBound.isEmpty()) {
-            if (Integer.parseInt( measObjBound) >= 0) {
+            if (Integer.parseInt(measObjBound) >= 0 && Integer.parseInt(measObjBound) < Integer.parseInt(measObjMaxBound)) {
                 intent.putExtra("measObjBound", Integer.parseInt(measObjBound));
             }
         }
         if (!measObjMaxBound.isEmpty()){
-            if (Integer.parseInt(measObjMaxBound) >= 0) {
+            if (Integer.parseInt(measObjMaxBound) >= 0 && Integer.parseInt(measObjBound) < Integer.parseInt(measObjMaxBound) && Integer.parseInt(measObjMaxBound) <= 255) {
                 intent.putExtra("measObjMaxBound", Integer.parseInt(measObjMaxBound));
             }
         }
         if (!measObjMinArea.isEmpty()) {
-            if (Double.parseDouble(measObjMinArea) >= 0 && Double.parseDouble(measObjMinArea) < Double.parseDouble(measObjMaxArea)) {
+            if (Integer.parseInt(measObjMinArea) >= 0 && Integer.parseInt(measObjMinArea) < Integer.parseInt(measObjMaxArea)) {
                 intent.putExtra("measObjMinArea", Integer.parseInt(measObjMinArea));
             }
         }
-        if (measObjMaxArea.isEmpty()) {
-            if (Double.parseDouble(measObjMaxArea) >= 0 && Double.parseDouble(measObjMaxArea) > Double.parseDouble(measObjMinArea)) {
+        if (!measObjMaxArea.isEmpty()) {
+            if (Integer.parseInt(measObjMaxArea) >= 0 && Integer.parseInt(measObjMaxArea) > Integer.parseInt(measObjMinArea)) {
                 intent.putExtra("measObjMaxArea", Integer.parseInt(measObjMaxArea));
             }
         }
@@ -135,9 +130,6 @@ public class SettingsActivity extends AppCompatActivity{
         if (refObjColThreshold >= 0 && refObjColThreshold < 89) {
             intent.putExtra("refObjColThreshold", refObjColThreshold);
         }
-        if (refObjSatMinimum >= 0 && refObjSatMinimum < 255) {
-            intent.putExtra("refObjSatMinimum", refObjSatMinimum);
-        }
         setResult(RESULT_OK, intent);
         finish();
     }
@@ -145,26 +137,19 @@ public class SettingsActivity extends AppCompatActivity{
     private void initSeekbars() {
         SeekBar hueControl = (SeekBar) findViewById(R.id.hue_bar);
         SeekBar refObjColThresholdControl = (SeekBar) findViewById(R.id.ref_obj_col_threshold_bar);
-        SeekBar saturationControl = (SeekBar) findViewById(R.id.saturation_bar);
-        SeekBar valueControl = (SeekBar) findViewById(R.id.value_bar);
 
         hueTextView = (TextView) findViewById(R.id.hue_value);
         refObjColThresholdTextView = (TextView) findViewById(R.id.ref_obj_col_threshold_value);
-        saturationTextView = (TextView) findViewById(R.id.saturation_value);
-        valueTextView = (TextView) findViewById(R.id.value_value);
 
         refObjHue = getIntent().getIntExtra("refObjHue", 56);
         refObjColThreshold = getIntent().getIntExtra("refObjColThreshold", 12);
-        refObjSatMinimum = getIntent().getIntExtra("refObjSatMinimum", 120);
 
         hueTextView.setText(Integer.toString(refObjHue));
         refObjColThresholdTextView.setText(Integer.toString(refObjColThreshold));
-        saturationTextView.setText(Integer.toString(refObjSatMinimum));
-        valueTextView.setText("0");
+
 
         hueControl.setProgress(refObjHue);
         refObjColThresholdControl.setProgress(refObjColThreshold);
-        saturationControl.setProgress(refObjSatMinimum);
 
         try {
             hueControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -178,7 +163,7 @@ public class SettingsActivity extends AppCompatActivity{
                 }
             });
 
-            // Listener to receive changes to the refObjSatMinimum-progress level
+            // Listener to receive changes to the refObjThreshold-progress level
             refObjColThresholdControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
                 @Override
@@ -190,29 +175,6 @@ public class SettingsActivity extends AppCompatActivity{
                 }
             });
 
-            // Listener to receive changes to the refObjSatMinimum-progress level
-            saturationControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-
-                @Override
-                public void onStopTrackingTouch(SeekBar arg0) {}
-                public void onStartTrackingTouch(SeekBar arg0) {}
-                public void onProgressChanged(SeekBar arg0, int progress, boolean arg2) {
-                    refObjSatMinimum = progress;
-                    saturationTextView.setText(Integer.toString(refObjSatMinimum));
-                }
-            });
-
-            // Listener to receive changes to the value-progress level
-            valueControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-
-                @Override
-                public void onStopTrackingTouch(SeekBar arg0) {}
-                public void onStartTrackingTouch(SeekBar arg0) {}
-                public void onProgressChanged(SeekBar arg0, int progress, boolean arg2) {
-                    value = progress;
-                    valueTextView.setText(Integer.toString(value));
-                }
-            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -228,7 +190,7 @@ public class SettingsActivity extends AppCompatActivity{
         TextView sideRatioLimitTextView = (EditText) findViewById(R.id.edit_text_side_ratio_limit);
         TextView measObjBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_bound);
         TextView measObjMaxBoundTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_bound);
-        TextView measObjMaxAreaAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_area);
+        TextView measObjMaxAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_max_area);
         TextView measObjMinAreaTextView = (EditText) findViewById(R.id.edit_text_meas_obj_min_area);
 
         // Get values from MainActivity through Intent
@@ -251,7 +213,7 @@ public class SettingsActivity extends AppCompatActivity{
         sideRatioLimitTextView.setText(refObjSideRatioLimit);
         measObjBoundTextView.setText(measObjBound);
         measObjMaxBoundTextView.setText(measObjMaxBound);
-        measObjMaxAreaAreaTextView.setText(measObjMaxArea);
+        measObjMaxAreaTextView.setText(measObjMaxArea);
         measObjMinAreaTextView.setText(measObjMinArea);
     }
 }

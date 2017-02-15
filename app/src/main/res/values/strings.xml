@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Augmented Androids</string>
-    <string name="main_menu_item1">Settings</string>
+    <string name="main_menu_item1">Settings..</string>
     <string name="main_menu_item2">Dilate iterations</string>
     <string name="detection_item">Toggle Detection</string>
     <string name="save_image_item">Save image</string>
-
+    <string name="shape_rectangle">Rectangle</string>
+    <string name="shape_circle">Circle</string>
+    <string name="debug_mode">Debug mode</string>
 </resources>

@@ -1,5 +1,7 @@
 package sop.augmentedandroids;
 
+import android.util.Log;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -37,10 +39,10 @@ public class MeasObjDetector {
     List<MatOfPoint> drawContour;
     private static final String TAG = "SOP::MeasObj";
 
-    private int bound = 100;
-    private static int max_bound = 255;
-    private int max_area = 100000;
-    private int min_area = 1000;
+    private int bound;
+    private static int max_bound;
+    private int max_area;
+    private int min_area;
 
     private double dist0 = 0.0;
     private double dist1 = 0.0;
@@ -48,7 +50,7 @@ public class MeasObjDetector {
 
     RotatedRect _minAreaRect;
 
-    /*
+    /**
     * \brief    Constructor of the class
     * \param    None
     * \returns  None
@@ -66,7 +68,7 @@ public class MeasObjDetector {
         return _minAreaRect;
     }
 
-    /*
+    /**
     * \brief    Method to get the valid contours for detected blobs
     * \param    None
     * \returns  MatOfPoints for valid contours
@@ -76,7 +78,7 @@ public class MeasObjDetector {
         return contours;
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
     * \param    min is minimum area that the blob has to meet in order to pass the algorithm
     * \returns  None
@@ -86,11 +88,19 @@ public class MeasObjDetector {
         return drawContour;
     }
 
+
+   /**
+    * \brief    Method to set the required parameters for valid blobs
+    * \param    min_area is minimum area that the blob has to meet in order to pass the algorithm
+    * \returns  None
+    */
+
     public void setMin(int val) {
         min_area = val;
+        Log.d(TAG, "min_area: " + min_area);
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
     * \param    max_area is maximum area that the blob has to meet in order to pass the algorithm
     * \returns  None
@@ -98,16 +108,30 @@ public class MeasObjDetector {
 
     public void setMax_area(int val) {
         max_area = val;
+        Log.d(TAG, "max_area: " + max_area);
     }
 
-    /*
+    /**
     * \brief    Method to set the required parameters for valid blobs
-    * \param    bound is minimum threadshold that the blob has to meet in order to pass the algorithm
+    * \param    bound is minimum threshold that the blob has to meet in order to pass the algorithm
     * \returns  None
     */
 
     public void setBound(int val) {
         bound = val;
+        Log.d(TAG, "bound " + bound);
+    }
+
+
+    /**
+     * \brief    Method to set the required parameters for valid blobs
+     * \param    bound is maximum threshold that the blob has to meet in order to pass the algorithm
+     * \returns  None
+     */
+
+    public void setMaxBound(int val) {
+        max_bound = val;
+        Log.d(TAG, "max_bound " + max_bound);
     }
 
     /*
@@ -122,9 +146,10 @@ public class MeasObjDetector {
         MatOfPoint2f contourAsFloat = new MatOfPoint2f();
         contours.get(i).convertTo(contourAsFloat, CvType.CV_32F);
 
-        /* option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
-        * http://stackoverflow.com/questions/11273588/how-to-convert-matofpoint-to-matofpoint2f-in-opencv-java-api
-        * */
+        /**
+		 * option 2 _minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contours.get(i).toArray()));
+         * http://stackoverflow.com/questions/11273588/how-to-convert-matofpoint-to-matofpoint2f-in-opencv-java-api
+         */
 
         _minAreaRect = Imgproc.minAreaRect(contourAsFloat);
         Point[] pts = new Point[4];
@@ -145,7 +170,7 @@ public class MeasObjDetector {
     }
 
 
-    /*
+    /**
     * \brief    Method to get the smaller diameter of the blob
     * \param    None
     * \returns  Double diameter
@@ -155,7 +180,7 @@ public class MeasObjDetector {
         return Math.min(dist0, dist1);
     }
 
-    /*
+    /**
     * \brief    Method to get the larger diameter of the blob
     * \param    None
     * \returns  Double diameter
@@ -164,7 +189,7 @@ public class MeasObjDetector {
     public double getMaxLen() { return Math.max(dist0, dist1);
     }
 
-    /*
+    /**
     * \brief    Method to get the middle point
     * \param    None
     * \returns  Double middle
@@ -173,7 +198,7 @@ public class MeasObjDetector {
     public Point getMidpoint() { return middle;
     }
 
-    /*
+    /**
     * \brief    Algorithm for blob detection and filtering
     * \param    inputFrame is the captured frame from public Mat onCameraFrame()
     * \returns  None
@@ -191,7 +216,7 @@ public class MeasObjDetector {
     *               MAXVAL
     *           (ELSE)
     *               0
-    * (0300) Blur the image so we can find the applicable contours from the threadshold detected Mat and return the full RETR_TREE points
+    * (0300) Blur the image so we can find the applicable contours from the threshold detected Mat and return the full RETR_TREE points
     *        RETR_TREE is used is current implementation but RETR_EXTERNAL could be used to save progress time
     *        \note Please see if the current implementation is good enough
     * (0400) Filter the found blobs using the parameters set (min_area, max_area)
@@ -206,13 +231,13 @@ public class MeasObjDetector {
         Mat mhierarchy = new Mat();
 
         // (0100)
-        /*
+        /**
         *   \note   This works smoother than Core.mixChannels(). Needs more investigation if this is best method to allocate the filtered image
         */
         Imgproc.cvtColor(inputFrame, gFrame, Imgproc.COLOR_BGRA2GRAY);
 
         // (0200)
-        /*
+        /**
         *   \note   This works smoother than Imgproc.blur() or Imgproc.adaptiveThreshold()  but we still need to implement blur/adaptive methods to reduce unwanted noise
         *           There is also possibility to use Imgproc.inRange() which would also require Core.dilate()
         */
@@ -225,14 +250,18 @@ public class MeasObjDetector {
         // (0400)
         int cnt_count = contours.size();
         if(cnt_count > 0) {
-            for (int i = cnt_count; i == 0; i--) {
-                if (Imgproc.contourArea(contours.get(i)) < min_area || Imgproc.contourArea(contours.get(i)) > max_area) {
-                    contours.remove(i);
+            List<MatOfPoint> found = new ArrayList<MatOfPoint>();
+            for(MatOfPoint contour : contours){
+                if(Imgproc.contourArea(contour) < min_area || Imgproc.contourArea(contour) > max_area){
+                    found.add(contour);
+                } else {
+                    //Log.d(TAG, "contourArea: " + Double.toString(Imgproc.contourArea(contour)));
                 }
             }
+            contours.removeAll(found);
         }
 
-        /*
+        /**
         * \note     We still need to adapt the following features before measuring: (TODO)
         *           - adaptiveThreadshold of some kind to avoid unwanted noise in measurements
         */

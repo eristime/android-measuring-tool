@@ -164,52 +164,6 @@
         android:id="@+id/ref_obj_col_threshold_bar"
         android:max="89" />
 
-    <!-- RefObj minimum saturation  -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/saturation_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Minimum saturation for reference object"
-            android:layout_weight="0.7"/>
-        <TextView
-            android:id="@+id/saturation_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAlignment="textEnd" />
-    </LinearLayout>
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/saturation_bar"
-        android:max="255" />
-
-    <!-- RefObj value, not in use  -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/value_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Value for reference object. Not in use yet."
-            android:layout_weight="0.7"/>
-        <TextView
-            android:id="@+id/value_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAlignment="textEnd" />
-    </LinearLayout>
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/value_bar"
-        android:max="255" />
-
     <!-- Apply button -->
     <Button android:id="@+id/button_back"
         android:layout_width="match_parent"

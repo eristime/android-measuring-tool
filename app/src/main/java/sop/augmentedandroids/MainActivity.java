@@ -13,8 +13,9 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
-import org.opencv.features2d.KeyPoint;
 import org.opencv.imgproc.Imgproc;
+
+import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -29,6 +30,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,10 +68,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static int refObjHue = 56;
     private static int refObjColThreshold = 12;
     private static int refObjSatMinimum = 120;
-    private static int refObjValue = 0;
     private static int numberOfDilations = 1;
-    private static double refObjMinContourArea = 500;
-    private static double refObjMaxContourArea = 800000;
+    private static double refObjMinContourArea = 500.0;
+    private static double refObjMaxContourArea = 800000.0;
     private static double refObjSideRatioLimit = 1.45;
 
 
@@ -87,8 +88,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     static List<RotatedRect> measRects;
     static List<List<MatOfPoint>> measDrawRects;
 
-    static List<KeyPoint> orb_keypoints = new ArrayList<>();
-
     NumberFormat nF1 = new DecimalFormat("#0.0");
     NumberFormat nF2 = new DecimalFormat("#0.00");
     NumberFormat nF4 = new DecimalFormat("#0.0000");
@@ -99,11 +98,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     int uiFont = Core.FONT_HERSHEY_PLAIN;
     int uiTextScale = 2;
-    int uiTextThickness = 3;
+    int uiTextThickness = 2;
 
     RefObjDetector cubeDetector;
     MeasObjDetector measDetector;
-    Measurements measurements;
+
+    boolean debugMode = false;
+    boolean circleOption = false;
+
+    MenuItem menu_rect;
+    MenuItem menu_circle;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -172,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 refObjSideRatioLimit);
 
         measDetector = new MeasObjDetector(measObjBound, measObjMaxBound, measObjMinArea, measObjMaxArea);
-        measurements = new Measurements();
     }
 
     @Override
@@ -198,6 +201,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
+        menu_rect = menu.findItem(R.id.shape_rectangle);
+        menu_circle = menu.findItem(R.id.shape_circle);
         return true;
     }
 
@@ -218,16 +223,33 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 intent.putExtra("measObjMinArea", Integer.toString(measObjMinArea));
                 intent.putExtra("refObjHue", refObjHue);
                 intent.putExtra("refObjColThreshold", refObjColThreshold);
-                intent.putExtra("refObjSatMinimum", refObjSatMinimum);
                 startActivityForResult(intent, 1);
                 return true;
 
             case R.id.action_detection_toggle:
                 detecting = !detecting;
+                item.setChecked(detecting);
                 return  true;
 
             case R.id.action_save_image:
                 saving = true;
+                return true;
+
+            case R.id.shape_circle:
+                circleOption = true;
+                menu_rect.setChecked(false);
+                menu_circle.setChecked(true);
+                return true;
+            case R.id.shape_rectangle:
+                circleOption = false;
+                item.setChecked(true);
+                menu_rect.setChecked(true);
+                menu_circle.setChecked(false);
+                return true;
+
+            case R.id.debug_mode:
+                debugMode = !debugMode;
+                item.setChecked(debugMode);
                 return true;
         }
         return true;
@@ -260,13 +282,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 measDetector.setBound(measObjBound);
 
                 measObjMaxBound = data.getIntExtra("measObjMaxBound", measObjMaxBound);
+                measDetector.setMaxBound(measObjMaxBound);
                 // Need for setBoundMax??
-
-                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
-                measDetector.setMax_area(measObjMaxArea);
 
                 measObjMinArea = data.getIntExtra("measObjMinArea", measObjMinArea);
                 measDetector.setMin(measObjMinArea);
+
+                measObjMaxArea = data.getIntExtra("measObjMaxArea", measObjMaxArea);
+                measDetector.setMax_area(measObjMaxArea);
 
                 // Seekbar input
                 refObjHue = data.getIntExtra("refObjHue", refObjHue);
@@ -274,9 +297,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                 refObjColThreshold = data.getIntExtra("refObjColThreshold", refObjColThreshold);
                 cubeDetector.setColThreshold(refObjColThreshold);
-
-                refObjSatMinimum = data.getIntExtra("refObjSatMinimum", refObjSatMinimum);
-                cubeDetector.setSatMinimum(refObjSatMinimum);
 
             }
         }
@@ -343,6 +363,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                      */
                     if (largestMeasIndex > -1) {
                         measDrawRect = measDrawRects.get(largestMeasIndex);
+                        measRect = measRects.get(largestMeasIndex);
                         measSide1 = measRectShortSide * cmToPxRatio;
                         measSide2 = measRectLongSide * cmToPxRatio;
                     }
@@ -359,18 +380,79 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         return inputFrame;  // Return the final (possibly edited) image frame
     }
 
-    boolean IsRectInContour(RotatedRect rect, MatOfPoint cnt) {
+    private Mat OnScreenDrawings(Mat inputFrame) {
 
-        MatOfPoint2f cnt2 = new MatOfPoint2f(cnt.toArray());
+        /**
+         *  Drawing of miscellaneous info texts to user interface
+         *
+         */
+        // Write calculated centimeters per pixel ratio on-screen
+        Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
 
-        for(int i=0; i<4; i++) {
+        if(debugMode) {
+            // Debugging: Write reference rect side ratio on-screen
+            Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
+            // Debugging: Write reference rect area on-screen
+            Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()) + "px^2", new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
 
-            if(Imgproc.pointPolygonTest(cnt2, rect.center, false) > 0) {
-                Log.d(TAG, "REF INSIDE MEAS");
-                return true;
+            // Debugging: Draw a circle marker and write color info of rotated rectangle center point
+            DrawRotRectCenterData(inputFrame);
+        }
+
+
+        /**
+         *  Draw the reference rectangle on-screen in magenta color
+         *
+         */
+        Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
+
+        if(rotRect != null) {
+            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 80, rotRect.center.y), uiFont, 2, textCol, 1);
+
+            if(!circleOption) {
+                Core.putText(inputFrame, "meas. angle: " + nF1.format(measRect.angle), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
+            }
+
+            if(debugMode) {
+                // Debugging:
+                Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 220), uiFont, uiTextScale, textCol, uiTextThickness);
             }
         }
-        return false;
+
+
+        /**
+         *  Drawing the measured rectangle of circle and informative texts about measured dimensions
+         *
+         */
+
+        if(circleOption) {
+
+            Point circleTextPos1 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 25*uiTextScale);
+            Point circleTextPos2 = new Point(measRect.center.x, measRect.center.y + (int)(measRect.size.height/2) + 40*uiTextScale);
+
+            double radius = ((Math.sqrt(measRectLongSide*measRectShortSide))/2);
+            double radius_cm = radius * cmToPxRatio;
+            double area_cm = 3.14 * (radius_cm*radius_cm);
+
+            Core.circle(inputFrame, measRect.center, (int)radius, measCol, 1);
+            Core.putText(inputFrame, "radius: " + nF1.format(radius_cm) + "cm", circleTextPos1, uiFont, uiTextScale, textCol, 1);
+            Core.putText(inputFrame, "area: " + nF1.format(area_cm) + "cm^2", circleTextPos2, uiFont, uiTextScale, textCol, 1);
+
+        } else {
+
+            Point rectTextPos1 = new Point(measRect.center.x, measRect.center.y - 10*uiTextScale);
+            Point rectTextPos2 = new Point(measRect.center.x, measRect.center.y + 10*uiTextScale);
+
+            // Draw the measured rectangle on-screen in magenta color
+            Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
+
+            // Write dimensions of measured object on-screen
+            Core.putText(inputFrame, "side 1: " + nF1.format(measSide1) + " cm", rectTextPos1, uiFont, uiTextScale, textCol, 1);
+            Core.putText(inputFrame, "side 2: " + nF1.format(measSide2) + " cm", rectTextPos2, uiFont, uiTextScale, textCol, 1);
+
+        }
+
+        return inputFrame;
     }
 
     private void SaveImage(Mat mImage) {
@@ -407,32 +489,18 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
     }
 
-    private Mat OnScreenDrawings(Mat inputFrame) {
-        // Draw the rotated rectangle on-screen in magenta color
-        Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
+    boolean IsRectInContour(RotatedRect rect, MatOfPoint cnt) {
 
-        Imgproc.drawContours(inputFrame, measDrawRect, -1, measCol, 2);
+        MatOfPoint2f cnt2 = new MatOfPoint2f(cnt.toArray());
 
+        for(int i=0; i<4; i++) {
 
-        // Write rect side ratio on-screen
-        Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
-
-        Core.putText(inputFrame, "MEASURING SIDES..", new Point(10.0, 600), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "1: " + nF1.format(measSide1) + " cm", new Point(10.0, 640), uiFont, uiTextScale, textCol, uiTextThickness);
-        Core.putText(inputFrame, "2: " + nF1.format(measSide2) + " cm", new Point(10.0, 680), uiFont, uiTextScale, textCol, uiTextThickness);
-
-        // Draw a circle marker and write color info of rotated rectangle center point
-        DrawRotRectCenterData(inputFrame);
-
-        if(rotRect != null) {
-            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 50.0), uiFont, 2, textCol, 1);
-            Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
-            Core.putText(inputFrame, "meas. angle: " + nF1.format(measRect.angle), new Point(10.0, 120), uiFont, uiTextScale, textCol, uiTextThickness);
+            if(Imgproc.pointPolygonTest(cnt2, rect.center, false) > 0) {
+                Log.d(TAG, "REF INSIDE MEAS");
+                return true;
+            }
         }
-
-        return inputFrame;
+        return false;
     }
 
     private void DrawRotRectCenterData(Mat frame_in) {

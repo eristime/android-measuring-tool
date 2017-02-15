@@ -3,9 +3,7 @@ package sop.augmentedandroids;
 import android.util.Log;
 
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -26,6 +24,7 @@ import java.util.List;
 
 public class RefObjDetector {
 
+    private static final String TAG = "SOP::RefObj";
     /* CLASS VARS */
     private RotatedRect rotRect;
     private double rectSideRatio;
@@ -71,23 +70,37 @@ public class RefObjDetector {
     /* SETTERS */
     public void setNumberOfDilations(int n){
         this.numberOfDilations = n;
+        Log.d(TAG, "numberOfDilations" + numberOfDilations);
     }
 
     public void setMinContourArea(double area){
         this.minContourArea = area;
+        Log.d(TAG, "minContourArea " + minContourArea);
     }
 
-    public void setMaxContourArea(double area) { this.maxContourArea = area; }
+    public void setMaxContourArea(double area) {
+        this.maxContourArea = area;
+        Log.d(TAG, "maxContourArea " + maxContourArea);
+    }
 
     public void setSideRatioLimit(double limit){
         this.sideRatioLimit = limit;
+        Log.d(TAG, "sideRatioLimit " + sideRatioLimit);
     }
 
-    public void setRefHue(int hue){ this.refHue = hue; }
+    public void setRefHue(int hue){ this.refHue = hue;
+        Log.d(TAG, "refHue " + refHue);
+    }
 
-    public void setColThreshold(int t){ this.colThreshold = t; }
+    public void setColThreshold(int t){
+        this.colThreshold = t;
+        Log.d(TAG, "colThreshold " + colThreshold);
+    }
 
-    public void setSatMinimum(int s){ this.satMinimum = s; }
+    public void setSatMinimum(int s){
+        this.satMinimum = s;
+        Log.d(TAG, "satMinimum " + satMinimum);
+    }
 
 
     /* CONSTRUCTOR */
@@ -151,7 +164,8 @@ public class RefObjDetector {
         return ((int) Math.round(a));
     }
 
-    /* Selects pixels in rectangular area of width 'scanWidth' around the 'rectCenter' and
+    /**
+     * Selects pixels in rectangular area of width 'scanWidth' around the 'rectCenter' and
      * calculates the average RGB values of those pixels. This gives much more accurate
      * result than single pixel, since there is some noise in most mobile cameras.
      */
@@ -271,7 +285,7 @@ public class RefObjDetector {
                     longSide = L2;
                 }
 
-                /*
+                /**
                  *If detected object has acceptable rectangle side ratio, area and color saturation,
                  * accept it as the true reference object and update class member variables
                  */
@@ -291,6 +305,5 @@ public class RefObjDetector {
         if (rectUpdated) {
             CalcRotRectContour();   // This is the contour for on-screen drawing
         }
-
     }
 }
