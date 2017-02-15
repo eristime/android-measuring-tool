@@ -306,7 +306,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public void onCameraViewStopped() {}
 
-    public boolean onTouch(View view, MotionEvent event) { return false; }
+    public boolean onTouch(View view, MotionEvent event) {
+        detecting = !detecting;
+        return false;
+    }
 
     public Mat onCameraFrame(Mat inputFrame) {
 
