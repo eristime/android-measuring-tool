@@ -1,12 +1,20 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_detection_toggle"
-        android:title="@string/detection_item" />
-    <item
         android:id="@+id/action_save_image"
-        android:title="@string/save_image_item" />
+        android:title="@string/save_image_item"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_detection_toggle"
+        android:title="@string/detection_item"
+        android:checkable="true"
+        tools:enabled="true"
+        android:enabled="true"
+        android:checked="true" />
     <item
         android:id="@+id/action_settings"
         android:title="@string/main_menu_item1" />
@@ -14,10 +22,22 @@
         android:checkableBehavior="single"
         android:visible="true"
         android:enabled="true">
-        <item android:title="Rectangle"
-            android:id="@+id/shape_rectangle" />
-        <item android:title="Circle"
-            android:id="@+id/shape_circle" />
+        <item android:title="@string/shape_rectangle"
+            android:id="@+id/shape_rectangle"
+            android:checkable="true"
+            android:checked="true"
+            android:enabled="true" />
+        <item android:title="@string/shape_circle"
+            android:id="@+id/shape_circle"
+            android:checked="false"
+            android:enabled="true"
+            android:checkable="true" />
     </group>
+    <item android:title="@string/debug_mode"
+        android:id="@+id/debug_mode"
+        android:checkable="true"
+        android:checked="false"
+        android:enabled="true"
+        tools:enabled="true" />
     <!-- app:showAsAction="never" -->
 </menu>

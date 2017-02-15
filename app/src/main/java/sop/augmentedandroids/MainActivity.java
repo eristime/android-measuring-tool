@@ -14,6 +14,8 @@ import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+
+import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -95,13 +97,17 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     Scalar measCol = new Scalar(0, 127, 255);
 
     int uiFont = Core.FONT_HERSHEY_PLAIN;
-    int uiTextScale = 1;
+    int uiTextScale = 2;
     int uiTextThickness = 2;
 
     RefObjDetector cubeDetector;
     MeasObjDetector measDetector;
 
+    boolean debugMode = false;
     boolean circleOption = false;
+
+    MenuItem menu_rect;
+    MenuItem menu_circle;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -195,6 +201,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
+        menu_rect = menu.findItem(R.id.shape_rectangle);
+        menu_circle = menu.findItem(R.id.shape_circle);
         return true;
     }
 
@@ -220,6 +228,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
             case R.id.action_detection_toggle:
                 detecting = !detecting;
+                item.setChecked(detecting);
                 return  true;
 
             case R.id.action_save_image:
@@ -228,9 +237,19 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
             case R.id.shape_circle:
                 circleOption = true;
+                menu_rect.setChecked(false);
+                menu_circle.setChecked(true);
                 return true;
             case R.id.shape_rectangle:
                 circleOption = false;
+                item.setChecked(true);
+                menu_rect.setChecked(true);
+                menu_circle.setChecked(false);
+                return true;
+
+            case R.id.debug_mode:
+                debugMode = !debugMode;
+                item.setChecked(debugMode);
                 return true;
         }
         return true;
@@ -287,10 +306,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public void onCameraViewStopped() {}
 
-    public boolean onTouch(View view, MotionEvent event) {
-        detecting = !detecting;
-        return false;
-    }
+    public boolean onTouch(View view, MotionEvent event) { return false; }
 
     public Mat onCameraFrame(Mat inputFrame) {
 
@@ -370,13 +386,15 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         // Write calculated centimeters per pixel ratio on-screen
         Core.putText(inputFrame, "cm/px ratio: " + nF4.format(cmToPxRatio), new Point(10.0, 60), uiFont, uiTextScale, textCol, uiTextThickness);
 
-        // Debugging: Write reference rect side ratio on-screen
-        //Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
-        // Debugging: Write reference rect area on-screen
-        //Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()) + "px^2, new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
+        if(debugMode) {
+            // Debugging: Write reference rect side ratio on-screen
+            Core.putText(inputFrame, "rectangle side ratio: " + nF2.format(cubeDetector.getRectSideRatio()), new Point(10.0, 140), uiFont, uiTextScale, textCol, uiTextThickness);
+            // Debugging: Write reference rect area on-screen
+            Core.putText(inputFrame, "area: " + nF2.format(cubeDetector.getRectArea()) + "px^2", new Point(10.0, 180), uiFont, uiTextScale, textCol, uiTextThickness);
 
-        // Debugging: Draw a circle marker and write color info of rotated rectangle center point
-        //DrawRotRectCenterData(inputFrame);
+            // Debugging: Draw a circle marker and write color info of rotated rectangle center point
+            DrawRotRectCenterData(inputFrame);
+        }
 
 
         /**
@@ -386,14 +404,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         Imgproc.drawContours(inputFrame, cubeDetector.getRotRectCnt(), -1, graphCol, 2);   // Draw rotated rect into image frame
 
         if(rotRect != null) {
-            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 60.0, rotRect.center.y + 120.0), uiFont, 2, textCol, 1);
+            Core.putText(inputFrame, "refObject", new Point(rotRect.center.x - 80, rotRect.center.y), uiFont, 2, textCol, 1);
 
             if(!circleOption) {
                 Core.putText(inputFrame, "meas. angle: " + nF1.format(measRect.angle), new Point(10.0, 100), uiFont, uiTextScale, textCol, uiTextThickness);
             }
 
-            // Debugging:
-            //Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 220), uiFont, uiTextScale, textCol, uiTextThickness);
+            if(debugMode) {
+                // Debugging:
+                Core.putText(inputFrame, "ref angle: " + nF1.format(rotRect.angle), new Point(10.0, 220), uiFont, uiTextScale, textCol, uiTextThickness);
+            }
         }
 
 
